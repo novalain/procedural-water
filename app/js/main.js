@@ -1,3 +1,6 @@
+'use strict'
+
 window.onload = () => {
-  console.log('hej');
+  const app = new Application(document.body);
+  app.loop();
 }
