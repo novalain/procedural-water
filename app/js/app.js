@@ -22,9 +22,21 @@ class Application {
   }
 
   setupScene_() {
-    const light = new THREE.AmbientLight(0xff0000);
+    const light = new THREE.DirectionalLight(0xffffff);
+    light.position.set(0, 1, 1).normalize();
     const geometry = new THREE.BoxGeometry(200, 200, 200);
-    const material = new THREE.MeshBasicMaterial({color: 0x000000});
+
+    //const geometry = new THREE.PlaneGeometry(150, 300, 50);
+    //const material = new THREE.MeshBasicMaterial({color: 0x000000});
+    const material = new THREE.MeshPhongMaterial({
+      ambient: 0x050505,
+      color: 0x0033ff,
+      specular: 0x555555,
+      shininess: 30,
+    });
+
+    //var material = new THREE.MeshPhongMaterial( { map: THREE.ImageUtils.loadTexture('js/crate.jpg') } );
+    //const material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
 
     this.scene = new THREE.Scene();
     this.mesh = new THREE.Mesh(geometry, material);
