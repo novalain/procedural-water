@@ -32,26 +32,29 @@ class Application {
     light.position.set(0, 1, 1).normalize();
     const geometry = new THREE.BoxGeometry(100, 100, 100);
 
-    const waterMaterial = new THREE.MeshBasicMaterial(
-        {color: 0x26ff26, side: THREE.Backside, wireframe: true});
-    const planeGeometry = new THREE.PlaneGeometry(400, 400, 3, 3);
-    const waterMesh = new THREE.Mesh(
-        planeGeometry,waterMaterial);
-
+    //const waterMaterial = new THREE.MeshBasicMaterial(
+    //    {color: 0x26ff26, side: THREE.Backside, wireframe: true});
+    const waterMaterial = new THREE.ShaderMaterial({
+      vertexShader: document.getElementById('vertexShader').textContent,
+      fragmentShader: document.getElementById('fragmentShader').textContent,
+      wireframe:true,
+    });
+    const planeGeometry = new THREE.PlaneGeometry(400, 400, 1, 1);
+    const waterMesh = new THREE.Mesh(planeGeometry, waterMaterial);
     //const geometry = new THREE.PlaneGeometry(150, 300, 50);
     //const material = new THREE.MeshBasicMaterial({color: 0x000000});
     const material = new THREE.MeshPhongMaterial({
-      ambient: 0x050505,
       color: 0x0033ff,
       specular: 0x555555,
       shininess: 30,
     });
+
     //var material = new THREE.MeshPhongMaterial( { map: THREE.ImageUtils.loadTexture('js/crate.jpg') } );
     //const material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
-    this.mesh = new THREE.Mesh(geometry, material);
+    this.mesh = new THREE.Mesh(geometry, waterMaterial);
     this.mesh.position.y += 80;
     waterMesh.position.y -= 50;
-    waterMesh.rotation.x = Math.PI * 3 / 4;
+    waterMesh.rotation.x =  Math.PI*3/4;
     this.scene.add(light);
     //this.bufferScene.add(this.mesh);
     this.scene.add(waterMesh);

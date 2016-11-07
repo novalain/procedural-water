@@ -6,6 +6,16 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <script type="x-shader/x-vertex" id="vertexShader">
+    void main() {
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+    }
+  </script>
+  <script type="x-shader/x-vertex" id="fragmentShader">
+    void main() {
+      gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0);
+    }
+  </script>
   <script src="../node_modules/three/three.min.js"></script>
   <script src="js/app.js"></script>
   <script src="js/main.js"></script>
