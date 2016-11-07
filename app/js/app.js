@@ -1,17 +1,19 @@
 'use strict'
 
 class Application {
-  constructor(container) {
+  constructor(container, shaders) {
     this.initThreeJs_(container);
-    this.setupScene_();
+    this.setupScene_(shaders);
     this.listen_();
   }
 
+  // TODO: Cleanup member variables
   initThreeJs_(container) {
     this.WIDTH = window.innerWidth;
     this.HEIGHT = window.innerHeight;
     this.container = container;
-    this.camera = new THREE.PerspectiveCamera(60, this.WIDTH / this.HEIGHT, 1, 5000);
+    this.camera =
+        new THREE.PerspectiveCamera(60, this.WIDTH / this.HEIGHT, 1, 5000);
     this.camera.position.set(0, 0, 500);
     this.renderer = new THREE.WebGLRenderer({
     //  alpha: true,
@@ -36,8 +38,9 @@ class Application {
     this.camera.updateProjectionMatrix();
   }
 
-  setupScene_() {
-    this.scene = new THREE.Scene();
+  setupScene_(shaders) {
+    this.scene_ = new THREE.Scene();
+    this.shaders_ = shaders;
     //this.bufferScene = new THREE.Scene();
     //this.bufferTexture = new THREE.WebGLRenderTarget(
     //    window.innerWidth, window.innerHeight,
@@ -49,14 +52,15 @@ class Application {
 
     this.waterUniforms = { time: { value: 0 } };
     const waterMaterial = new THREE.ShaderMaterial({
-      vertexShader: document.getElementById('vertexShader').textContent,
-      fragmentShader: document.getElementById('fragmentShader').textContent,
-      uniforms : this.waterUniforms,
+      vertexShader: this.shaders_['water_vert'],
+      fragmentShader:
+          this.shaders_['simplex_noise'] + this.shaders_['water_frag'],
+      uniforms: this.waterUniforms,
       side: THREE.DoubleSide,
     });
 
     const planeGeometry = new THREE.PlaneGeometry(400, 400, 1, 1);
-    const waterMesh = new THREE.Mesh(planeGeometry, waterMaterial);
+    const waterMesh = new THREE.Mesh(planeGeometry, waterMaterial)
     const cubeMaterial = new THREE.MeshPhongMaterial({
       color: 0x0033ff,
       specular: 0x555555,
@@ -68,10 +72,10 @@ class Application {
     this.cubeMesh.position.y += 80;
     waterMesh.position.y -= 50;
     waterMesh.rotation.x =  Math.PI*3/4;
-    this.scene.add(light);
+    this.scene_.add(light);
     //this.bufferScene.add(this.cubeMesh);
-    this.scene.add(waterMesh);
-    this.scene.add(this.cubeMesh);
+    this.scene_.add(waterMesh);
+    this.scene_.add(this.cubeMesh);
   }
 
   loop() {
@@ -80,7 +84,7 @@ class Application {
     this.waterUniforms.time.value += 0.05;
 
     //this.renderer.render(this.bufferScene, this.camera, this.bufferTexture);
-    this.renderer.render(this.scene, this.camera);
+    this.renderer.render(this.scene_, this.camera);
     requestAnimationFrame(this.loop.bind(this));
   }
 }
