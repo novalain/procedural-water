@@ -49,6 +49,10 @@ class Application {
     const light = new THREE.DirectionalLight(0xffffff);
     light.position.set(0, 1, 1).normalize();
     const geometry = new THREE.BoxGeometry(100, 100, 100);
+    for (var i = 0; i < geometry.faces.length; i++) {
+      geometry.faces[i].color.setHex(Math.random() * 0xffffff);
+    }
+
 
     this.waterUniforms = { time: { value: 0 } };
     const waterMaterial = new THREE.ShaderMaterial({
@@ -61,10 +65,11 @@ class Application {
 
     const planeGeometry = new THREE.PlaneGeometry(400, 400, 1, 1);
     const waterMesh = new THREE.Mesh(planeGeometry, waterMaterial)
-    const cubeMaterial = new THREE.MeshPhongMaterial({
-      color: 0x0033ff,
+    const cubeMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
       specular: 0x555555,
       shininess: 30,
+      vertexColors: THREE.FaceColors,
     });
 
     /// TODO: Keep all scene objects that needs to be updated in a list
@@ -80,7 +85,7 @@ class Application {
 
   loop() {
     this.cubeMesh.rotation.x += 0.005;
-    this.cubeMesh.rotation.y += 0.01;
+    //this.cubeMesh.rotation.y += 0.01;
     this.waterUniforms.time.value += 0.05;
 
     //this.renderer.render(this.bufferScene, this.camera, this.bufferTexture);
