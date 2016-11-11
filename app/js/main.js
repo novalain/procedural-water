@@ -3,7 +3,7 @@
 // TODO: ShaderManager
 const shaderPaths = new Map([['water_vert', 'shaders/watershader.vert'],
                             ['water_frag', 'shaders/watershader.frag'],
-                            ['simplex_noise', 'shaders/Noise4D.glsl']]);
+                            ['simplex_noise', 'shaders/Noise3D.glsl']]);
 const shadersLoaded = new Map();
 
 window.onload = () => {
