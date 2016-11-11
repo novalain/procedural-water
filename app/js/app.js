@@ -27,6 +27,8 @@ class Application {
     this.renderer.setSize(this.WIDTH, this.HEIGHT);
     this.container.appendChild(this.renderer.domElement);
     this.time = 0;
+
+    this.controls = new THREE.OrbitControls(this.camera_);
   }
 
   listen_() {
@@ -127,6 +129,8 @@ class Application {
     this.cubeMesh.rotation.x += 0.005;
     this.cubeMesh.rotation.y += 0.01;
     this.waterMaterial.uniforms.time.value += 0.05;
+
+    this.controls.update();
 
     this.renderMirrorImage();
     this.renderer.render(this.scene_, this.camera_);
