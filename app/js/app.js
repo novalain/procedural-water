@@ -54,10 +54,27 @@ class Application {
 
     const light = new THREE.DirectionalLight(0xffffff);
     light.position.set(0, 1, 1).normalize();
-    const geometry = new THREE.BoxGeometry(100, 100, 100);
+    const geometry = new THREE.BoxGeometry(30, 30, 30);
     for (var i = 0; i < geometry.faces.length; i++) {
       geometry.faces[i].color.setHex(Math.random() * 0xffffff);
     }
+
+    const sphereGeometry = new THREE.SphereGeometry(20, 32, 32);
+    const sphereMaterial = new THREE.MeshLambertMaterial( {color:0xffff00 });
+    const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    this.scene_.add(sphereMesh);
+
+    sphereMesh.position.x += 60;
+    sphereMesh.position.y += 30;
+
+    const torusGeometry = new THREE.TorusGeometry(15, 8, 8, 32);
+    const torusMaterial = new THREE.MeshLambertMaterial({color: 'red'});
+    const torusMesh = new THREE.Mesh(torusGeometry, torusMaterial);
+    this.scene_.add(torusMesh);
+
+    torusMesh.rotation.x = - Math.PI / 4;
+    torusMesh.position.x -= 60;
+    torusMesh.position.y += 30;
 
     const waterUniforms = {
       time: {value: 0},
@@ -72,7 +89,7 @@ class Application {
       side: THREE.DoubleSide,
     });
 
-    const planeGeometry = new THREE.PlaneGeometry(400, 400, 1, 1);
+    const planeGeometry = new THREE.PlaneGeometry(200, 250, 1, 1);
     const waterMesh = new THREE.Mesh(planeGeometry, this.waterMaterial)
     const cubeMaterial = new THREE.MeshBasicMaterial({
       color: 0xffffff,
@@ -83,7 +100,7 @@ class Application {
 
     /// TODO: Keep all scene objects that needs to be updated in a list
     this.cubeMesh = new THREE.Mesh(geometry, cubeMaterial);
-    this.cubeMesh.position.y += 120;
+    this.cubeMesh.position.y += 40;
     //waterMesh.position.y -= 50;
     waterMesh.rotation.x =  Math.PI/2;
     this.scene_.add(light);
