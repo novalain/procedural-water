@@ -16,7 +16,6 @@ class Application {
         new THREE.PerspectiveCamera(60, this.WIDTH / this.HEIGHT, 1, 5000);
     this.camera_.position.set(0, 300, 500);
     this.camera_.lookAt(new THREE.Vector3(0,0,0));
-    this.setupFlippedCamera(this.mirrorCamera_);
 
     this.renderer = new THREE.WebGLRenderer({
     //  alpha: true,
@@ -90,10 +89,10 @@ class Application {
 
     const planeGeometry = new THREE.PlaneGeometry(200, 250, 1, 1);
     const waterMesh = new THREE.Mesh(planeGeometry, this.waterMaterial)
-    const cubeMaterial = new THREE.MeshBasicMaterial({
+    const cubeMaterial = new THREE.MeshPhongMaterial({
       color: 0xffffff,
-      //specular: 0x555555,
-      //shininess: 30,
+      specular: 0x555555,
+      shininess: 30,
       vertexColors: THREE.FaceColors,
     });
 
@@ -108,14 +107,13 @@ class Application {
     this.scene_.add(this.cubeMesh);
   }
 
-  // TODO: Need to update this when implementing Orbit Controls
-  setupFlippedCamera(flippedCamera) {
+  updateFlippedCamera() {
     this.mirrorCamera_ = this.camera_.clone();
     const cameraUp = new THREE.Vector3(0, 1, 0).applyQuaternion(this.camera_.quaternion);
     this.mirrorCamera_.up.set(cameraUp.x, -cameraUp.y, cameraUp.z);
     this.mirrorCamera_.position.set(
         this.camera_.position.x, -this.camera_.position.y, this.camera_.position.z);
-    this.mirrorCamera_.lookAt(new THREE.Vector3(0, 0, 0));
+    this.mirrorCamera_.lookAt(this.camera_.getWorldDirection());
   }
 
   renderMirrorImage() {
@@ -130,6 +128,7 @@ class Application {
     this.cubeMesh.rotation.y += 0.01;
     this.waterMaterial.uniforms.time.value += 0.05;
 
+    this.updateFlippedCamera();
     this.controls.update();
 
     this.renderMirrorImage();
