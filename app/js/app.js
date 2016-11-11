@@ -12,9 +12,15 @@ class Application {
     this.WIDTH = window.innerWidth;
     this.HEIGHT = window.innerHeight;
     this.container = container;
-    this.camera =
+    this.camera_ =
         new THREE.PerspectiveCamera(60, this.WIDTH / this.HEIGHT, 1, 5000);
-    this.camera.position.set(0, 0, 500);
+
+    this.camera_.position.set(0, 300, 500);
+    this.camera_.lookAt(new THREE.Vector3(0,0,0));
+    this.mirrorCamera_ =
+        new THREE.PerspectiveCamera(60, this.WIDTH / this.HEIGHT, 1, 5000);
+    this.setupFlippedCamera(this.mirrorCamera_);
+
     this.renderer = new THREE.WebGLRenderer({
     //  alpha: true,
       antialias: true,
@@ -34,17 +40,17 @@ class Application {
     this.WIDTH = window.innerWidth;
     this.HEIGHT = window.innerHeight;
     this.renderer.setSize(this.WIDTH, this.HEIGHT);
-    this.camera.aspect = this.WIDTH / this.HEIGHT;
-    this.camera.updateProjectionMatrix();
+    this.camera_.aspect = this.WIDTH / this.HEIGHT;
+    this.camera_.updateProjectionMatrix();
   }
 
   setupScene_(shaders) {
     this.scene_ = new THREE.Scene();
     this.shaders_ = shaders;
     //this.bufferScene = new THREE.Scene();
-    //this.bufferTexture = new THREE.WebGLRenderTarget(
-    //    window.innerWidth, window.innerHeight,
-    //    {minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
+    this.bufferTexture = new THREE.WebGLRenderTarget(
+        window.innerWidth, window.innerHeight,
+        {minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
 
     const light = new THREE.DirectionalLight(0xffffff);
     light.position.set(0, 1, 1).normalize();
@@ -53,43 +59,62 @@ class Application {
       geometry.faces[i].color.setHex(Math.random() * 0xffffff);
     }
 
+    const waterUniforms = {
+      time: {value: 0},
+      texture: {value: this.bufferTexture.texture}
+    };
 
-    this.waterUniforms = { time: { value: 0 } };
-    const waterMaterial = new THREE.ShaderMaterial({
+    this.waterMaterial = new THREE.ShaderMaterial({
       vertexShader: this.shaders_['water_vert'],
       fragmentShader:
           this.shaders_['simplex_noise'] + this.shaders_['water_frag'],
-      uniforms: this.waterUniforms,
+      uniforms: waterUniforms,
       side: THREE.DoubleSide,
     });
 
     const planeGeometry = new THREE.PlaneGeometry(400, 400, 1, 1);
-    const waterMesh = new THREE.Mesh(planeGeometry, waterMaterial)
+    const waterMesh = new THREE.Mesh(planeGeometry, this.waterMaterial)
     const cubeMaterial = new THREE.MeshBasicMaterial({
       color: 0xffffff,
-      specular: 0x555555,
-      shininess: 30,
+      //specular: 0x555555,
+      //shininess: 30,
       vertexColors: THREE.FaceColors,
     });
 
     /// TODO: Keep all scene objects that needs to be updated in a list
     this.cubeMesh = new THREE.Mesh(geometry, cubeMaterial);
-    this.cubeMesh.position.y += 80;
-    waterMesh.position.y -= 50;
-    waterMesh.rotation.x =  Math.PI*3/4;
+    this.cubeMesh.position.y += 120;
+    //waterMesh.position.y -= 50;
+    waterMesh.rotation.x =  Math.PI/2;
     this.scene_.add(light);
     //this.bufferScene.add(this.cubeMesh);
     this.scene_.add(waterMesh);
     this.scene_.add(this.cubeMesh);
   }
 
+  // TODO: Need to update this when implementing Orbit Controls
+  setupFlippedCamera(flippedCamera) {
+    const cameraCurrentWorld = this.camera_.getWorldDirection();
+    flippedCamera.up.set(cameraCurrentWorld.x, -cameraCurrentWorld.y, cameraCurrentWorld.z);
+    flippedCamera.position.set(
+        this.camera_.position.x, -this.camera_.position.y, this.camera_.position.z);
+    flippedCamera.lookAt(new THREE.Vector3(0, 0, 0));
+  }
+
+  renderMirrorImage() {
+    // Remove buffer texture from scene when it is rendered to
+    this.waterMaterial.visible = false;
+    this.renderer.render(this.scene_, this.mirrorCamera_, this.bufferTexture);
+    this.waterMaterial.visible = true;
+  }
+
   loop() {
     this.cubeMesh.rotation.x += 0.005;
-    //this.cubeMesh.rotation.y += 0.01;
-    this.waterUniforms.time.value += 0.05;
+    this.cubeMesh.rotation.y += 0.01;
+    this.waterMaterial.uniforms.time.value += 0.05;
 
-    //this.renderer.render(this.bufferScene, this.camera, this.bufferTexture);
-    this.renderer.render(this.scene_, this.camera);
+    this.renderMirrorImage();
+    this.renderer.render(this.scene_, this.camera_);
     requestAnimationFrame(this.loop.bind(this));
   }
 }
