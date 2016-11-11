@@ -14,11 +14,8 @@ class Application {
     this.container = container;
     this.camera_ =
         new THREE.PerspectiveCamera(60, this.WIDTH / this.HEIGHT, 1, 5000);
-
     this.camera_.position.set(0, 300, 500);
     this.camera_.lookAt(new THREE.Vector3(0,0,0));
-    this.mirrorCamera_ =
-        new THREE.PerspectiveCamera(60, this.WIDTH / this.HEIGHT, 1, 5000);
     this.setupFlippedCamera(this.mirrorCamera_);
 
     this.renderer = new THREE.WebGLRenderer({
@@ -111,11 +108,12 @@ class Application {
 
   // TODO: Need to update this when implementing Orbit Controls
   setupFlippedCamera(flippedCamera) {
-    const cameraCurrentWorld = this.camera_.getWorldDirection();
-    flippedCamera.up.set(cameraCurrentWorld.x, -cameraCurrentWorld.y, cameraCurrentWorld.z);
-    flippedCamera.position.set(
+    this.mirrorCamera_ = this.camera_.clone();
+    const cameraUp = new THREE.Vector3(0, 1, 0).applyQuaternion(this.camera_.quaternion);
+    this.mirrorCamera_.up.set(cameraUp.x, -cameraUp.y, cameraUp.z);
+    this.mirrorCamera_.position.set(
         this.camera_.position.x, -this.camera_.position.y, this.camera_.position.z);
-    flippedCamera.lookAt(new THREE.Vector3(0, 0, 0));
+    this.mirrorCamera_.lookAt(new THREE.Vector3(0, 0, 0));
   }
 
   renderMirrorImage() {
