@@ -68,6 +68,22 @@ class Application {
     this.scene_.add(sky);
   }
 
+  setupBottom_() {
+    const textureLoader = new THREE.TextureLoader();
+    const planeGeometry = new THREE.PlaneGeometry(200, 250, 1, 1);
+    const img = textureLoader.load('images/checkerboard.jpg');
+    img.wrapS = img.wrapT = THREE.RepeatWrapping;
+    img.repeat.set(3, 3);
+    const bottomMaterial = new THREE.MeshLambertMaterial({
+      map: img,
+      side: THREE.BackSide
+    });
+    const bottomMesh = new THREE.Mesh(planeGeometry, bottomMaterial);
+    bottomMesh.rotation.x = Math.PI/2;
+    bottomMesh.position.y -= 30;
+    this.scene_.add(bottomMesh);
+  }
+
   setupScene_(shaders) {
     this.scene_ = new THREE.Scene();
     this.shaders_ = shaders;
@@ -123,6 +139,7 @@ class Application {
     });
 
     this.setupSkybox_();
+    this.setupBottom_();
 
     /// TODO: Keep all scene objects that needs to be updated in a list
     this.cubeMesh = new THREE.Mesh(geometry, cubeMaterial);
