@@ -13,7 +13,7 @@ class Application {
     this.HEIGHT = window.innerHeight;
     this.container = container;
     this.camera_ =
-        new THREE.PerspectiveCamera(60, this.WIDTH / this.HEIGHT, 1, 5000);
+        new THREE.PerspectiveCamera(60, this.WIDTH / this.HEIGHT, 1, 20000);
     this.camera_.position.set(0, 300, 500);
     this.camera_.lookAt(new THREE.Vector3(0,0,0));
 
@@ -22,7 +22,7 @@ class Application {
       antialias: true,
     });
     //this.renderer = new THREE.WebGLRenderer();
-    this.renderer.setClearColor(0x000000);
+    this.renderer.setClearColor(0xffffff);
     this.renderer.setSize(this.WIDTH, this.HEIGHT);
     this.container.appendChild(this.renderer.domElement);
     this.time = 0;
@@ -40,6 +40,21 @@ class Application {
     this.renderer.setSize(this.WIDTH, this.HEIGHT);
     this.camera_.aspect = this.WIDTH / this.HEIGHT;
     this.camera_.updateProjectionMatrix();
+  }
+
+  setupSkybox_() {
+    const textureLoader = new THREE.TextureLoader();
+    const urls = [
+      'images/dawnmountain-xpos.png', 'images/dawnmountain-xneg.png',
+      'images/dawnmountain-ypos.png', 'images/dawnmountain-yneg.png',
+      'images/dawnmountain-zpos.png', 'images/dawnmountain-zneg.png'
+    ];
+    const materialArray = urls.map(url => new THREE.MeshBasicMaterial(
+        {map: textureLoader.load(url), side: THREE.BackSide}));
+    const skyboxMaterial = new THREE.MeshFaceMaterial(materialArray);
+    const skyboxGeom = new THREE.CubeGeometry(1000, 1000, 1000, 1, 1, 1);
+    const skybox = new THREE.Mesh(skyboxGeom, skyboxMaterial);
+    this.scene_.add(skybox);
   }
 
   setupScene_(shaders) {
@@ -95,6 +110,8 @@ class Application {
       shininess: 30,
       vertexColors: THREE.FaceColors,
     });
+
+    this.setupSkybox_();
 
     /// TODO: Keep all scene objects that needs to be updated in a list
     this.cubeMesh = new THREE.Mesh(geometry, cubeMaterial);
