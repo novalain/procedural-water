@@ -57,6 +57,17 @@ class Application {
     this.scene_.add(skybox);
   }
 
+  setupSkyDome_() {
+    const textureLoader = new THREE.TextureLoader();
+    const skyGeo = new THREE.SphereGeometry(5000, 25, 25);
+    const texture = textureLoader.load("images/warped.jpg");
+    const material = new THREE.MeshPhongMaterial({
+      map: texture, side:THREE.BackSide,
+    });
+    const sky = new THREE.Mesh(skyGeo, material);
+    this.scene_.add(sky);
+  }
+
   setupScene_(shaders) {
     this.scene_ = new THREE.Scene();
     this.shaders_ = shaders;
