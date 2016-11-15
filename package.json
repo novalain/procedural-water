@@ -21,5 +21,8 @@
   "homepage": "https://github.com/novalain/procedural-water#readme",
   "dependencies": {
     "three.js": "^0.77.1"
+  },
+  "devDependencies": {
+    "stats.js": "^0.17.0"
   }
 }

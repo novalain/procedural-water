@@ -3,6 +3,8 @@
 class Application {
   constructor(container, shaders) {
     this.initThreeJs_(container);
+    this.stats_ = new Stats();
+    container.appendChild(this.stats_.dom);
     this.setupScene_(shaders);
     this.listen_();
   }
@@ -178,6 +180,7 @@ class Application {
   }
 
   loop() {
+    this.stats_.begin();
     this.cubeMesh.rotation.x += 0.005;
     this.cubeMesh.rotation.y += 0.01;
     this.waterMaterial.uniforms.time.value += 0.05;
@@ -193,5 +196,6 @@ class Application {
     this.renderer.clippingPlanes = [this.dummyPlane_];
     this.renderer.render(this.scene_, this.camera_);
     requestAnimationFrame(this.loop.bind(this));
+    this.stats_.end();
   }
 }
