@@ -128,6 +128,7 @@ class Application {
       refractionTexture: {value: this.refractionRenderTarget.texture},
       // For Fresnel
       cameraPositionWorld: {value: this.camera_.position},
+      lightPositionWorld: {value: light.position},
     };
 
     this.waterMaterial = new THREE.ShaderMaterial({
