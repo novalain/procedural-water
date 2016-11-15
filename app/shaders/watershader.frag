@@ -7,40 +7,51 @@ varying vec4 posClipSpace;
 varying vec3 toCamera;
 varying vec3 fromLight;
 
-const float waveStrength = 0.02;
-const float reflectiveFactor = 1.75;
-const float shineDamper = 10.0;
-const float reflectivity = 1.6;
+const vec4 waterColor = vec4(0.0, 0.3, 0.5, 1.0);
+
+// Phong specular term => Ks * (R dot V)^n
+vec3 calculateSpecularHighlights(in float totalNoise, in vec3 unitToCamera) {
+  const float shineDamper = 10.0;
+  const float reflectivity = 1.6;
+  vec3 perturbedNormal = normalize(vec3(totalNoise, 0.002, totalNoise));
+  vec3 reflectedLight = reflect(normalize(fromLight), perturbedNormal);
+  float specular = max(dot(reflectedLight, unitToCamera), 0.0);
+  specular = pow(specular, shineDamper);
+  vec3 result = vec3(1.0, 1.0, 1.0) * specular * reflectivity;
+  return result;
+}
+
+float calculateSimplexNoise() {
+  const float waveStrength = 0.02;
+  const float scaleFactor = 100.0;
+  //float noiseSeed1 = snoise(vec3(scaleFactor*vUv.x*0.02, scaleFactor*vUv.y*0.09, time*0.15));
+  float noiseSeed2 = snoise(vec3(-scaleFactor*vUv.x*0.02, scaleFactor*vUv.y*0.09 + time * 0.2, time*0.15));
+  float totalNoise = (noiseSeed2) * waveStrength;
+  return totalNoise;
+}
+
+float calculateFresnel(in vec3 unitToCamera) {
+  const float fresnelFactor = 1.75;
+  // TODO: Replace hardcoded vec with water plane's normal
+  float fresnelTerm = dot(unitToCamera, vec3(0.0, 1.0, 0.0));
+  fresnelTerm = pow(fresnelTerm, fresnelFactor);
+  return fresnelTerm;
+}
 
 void main() {
+  float noise = calculateSimplexNoise();
 
-  float factor = 100.0;
-  //float noiseSeed1 = snoise(vec3(factor*vUv.x*0.02, factor*vUv.y*0.09, time*0.15));
-  float noiseSeed2 = snoise(vec3(-factor*vUv.x*0.02, factor*vUv.y*0.09 + time * 0.2, time*0.15));
-  float totalNoise = (noiseSeed2) * waveStrength;
-
-  //gl_FragColor = vec4(99.0, 120.0, 173.0, 1.0) / 255.0 * noise;
-  //vec4 waterColor = vec4(99.0, 120.0, 173.0, 1.0) / 255.0;
   vec2 ndc = posClipSpace.xy / posClipSpace.w;
   vec2 screenCoords = ndc / 2.0 + 0.5;
   vec2 reflectionCoords = vec2(1.0 - screenCoords.x, screenCoords.y);
   vec2 refractionCoords = vec2(screenCoords.x, screenCoords.y);
 
-  // Fresnel
   vec3 unitToCamera = normalize(toCamera);
-  // TODO: Replace hardcoded vec with water plane's normal
-  float fresnelTerm = dot(unitToCamera, vec3(0.0, 1.0, 0.0));
-  fresnelTerm = pow(fresnelTerm, reflectiveFactor);
 
-  vec3 perturbedNormal = normalize(vec3(totalNoise, 0.002, totalNoise));
+  float fresnelTerm = calculateFresnel(unitToCamera);
+  vec3 specularHighlights = calculateSpecularHighlights(noise, unitToCamera);
 
-  // Lightning
-  vec3 reflectedLight = reflect(normalize(fromLight), perturbedNormal);
-  float specular = max(dot(reflectedLight, unitToCamera), 0.0);
-  specular = pow(specular, shineDamper);
-  vec3 specularHighlights = vec3(1.0, 1.0, 1.0) * specular * reflectivity;
-
-  gl_FragColor = mix(texture2D(reflectionTexture, reflectionCoords + totalNoise),
-                     texture2D(refractionTexture, refractionCoords + totalNoise), fresnelTerm);
-  gl_FragColor = mix(gl_FragColor, vec4(0.0, 0.3, 0.5, 1.0), 0.25) + vec4(specularHighlights, 0.0);
+  gl_FragColor = mix(texture2D(reflectionTexture, reflectionCoords + noise),
+                     texture2D(refractionTexture, refractionCoords + noise), fresnelTerm);
+  gl_FragColor = mix(gl_FragColor, waterColor, 0.25) + vec4(specularHighlights, 0.0);
 }

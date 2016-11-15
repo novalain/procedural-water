@@ -7,9 +7,11 @@ varying vec3 toCamera;
 varying vec3 fromLight;
 
 void main() {
+  vec3 posWorld = vec3(modelMatrix * vec4(position, 1.0));
+
   posClipSpace = projectionMatrix * modelViewMatrix * vec4(position,1.0);
-  toCamera = cameraPositionWorld - vec3(modelMatrix * vec4(position, 1.0));
-  fromLight = vec3(modelMatrix * vec4(position, 1.0)) - lightPositionWorld;
+  toCamera = cameraPositionWorld - posWorld;
+  fromLight = posWorld - lightPositionWorld;
   vUv = uv;
   gl_Position = posClipSpace;
 }
