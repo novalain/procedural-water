@@ -1,8 +1,12 @@
-varying vec4 pos;
+uniform vec3 cameraPositionWorld;
+
+varying vec4 posClipSpace;
 varying vec2 vUv;
+varying vec3 toCamera;
 
 void main() {
-  pos = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+  posClipSpace = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+  toCamera = cameraPositionWorld - vec3(modelMatrix * vec4(position, 1.0));
   vUv = uv;
-  gl_Position = pos;
+  gl_Position = posClipSpace;
 }

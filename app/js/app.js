@@ -123,7 +123,9 @@ class Application {
     const waterUniforms = {
       time: {value: 0},
       reflectionTexture: {value: this.reflectionRenderTarget.texture},
-      refractionTexture: {value: this.refractionRenderTarget.texture}
+      refractionTexture: {value: this.refractionRenderTarget.texture},
+      // For Fresnel
+      cameraPositionWorld: {value: this.camera_.position},
     };
 
     this.waterMaterial = new THREE.ShaderMaterial({
