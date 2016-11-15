@@ -17,15 +17,17 @@ class Application {
     this.camera_.position.set(0, 300, 500);
     this.camera_.lookAt(new THREE.Vector3(0,0,0));
 
+    this.reflectionPlane_ = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    this.refractionPlane_ = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
+    // TODO: How to remove clipping plane from Three.JS without lag?
+    this.dummyPlane_ = new THREE.Plane(new THREE.Vector3(0, 1, 0), 5000);
+
     this.renderer = new THREE.WebGLRenderer({
-    //  alpha: true,
       antialias: true,
     });
-    //this.renderer = new THREE.WebGLRenderer();
     this.renderer.setClearColor(0xffffff);
     this.renderer.setSize(this.WIDTH, this.HEIGHT);
     this.container.appendChild(this.renderer.domElement);
-    this.time = 0;
 
     this.controls = new THREE.OrbitControls(this.camera_);
   }
@@ -87,8 +89,10 @@ class Application {
   setupScene_(shaders) {
     this.scene_ = new THREE.Scene();
     this.shaders_ = shaders;
-    //this.bufferScene = new THREE.Scene();
-    this.bufferTexture = new THREE.WebGLRenderTarget(
+    this.reflectionRenderTarget = new THREE.WebGLRenderTarget(
+        window.innerWidth, window.innerHeight,
+        {minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
+    this.refractionRenderTarget = new THREE.WebGLRenderTarget(
         window.innerWidth, window.innerHeight,
         {minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
 
@@ -118,7 +122,8 @@ class Application {
 
     const waterUniforms = {
       time: {value: 0},
-      texture: {value: this.bufferTexture.texture}
+      reflectionTexture: {value: this.reflectionRenderTarget.texture},
+      refractionTexture: {value: this.refractionRenderTarget.texture}
     };
 
     this.waterMaterial = new THREE.ShaderMaterial({
@@ -126,7 +131,7 @@ class Application {
       fragmentShader:
           this.shaders_['simplex_noise'] + this.shaders_['water_frag'],
       uniforms: waterUniforms,
-      side: THREE.DoubleSide,
+      side: THREE.BackSide,
     });
 
     const planeGeometry = new THREE.PlaneGeometry(200, 250, 1, 1);
@@ -147,7 +152,6 @@ class Application {
     //waterMesh.position.y -= 50;
     waterMesh.rotation.x =  Math.PI/2;
     this.scene_.add(light);
-    //this.bufferScene.add(this.cubeMesh);
     this.scene_.add(waterMesh);
     this.scene_.add(this.cubeMesh);
   }
@@ -162,10 +166,13 @@ class Application {
   }
 
   renderMirrorImage() {
-    // Remove buffer texture from scene when it is rendered to
-    this.waterMaterial.visible = false;
-    this.renderer.render(this.scene_, this.mirrorCamera_, this.bufferTexture);
-    this.waterMaterial.visible = true;
+    this.renderer.clippingPlanes = [this.reflectionPlane_];
+    this.renderer.render(this.scene_, this.mirrorCamera_, this.reflectionRenderTarget);
+  }
+
+  renderRefractionImage() {
+    this.renderer.clippingPlanes = [this.refractionPlane_];
+    this.renderer.render(this.scene_, this.camera_, this.refractionRenderTarget);
   }
 
   loop() {
@@ -176,7 +183,12 @@ class Application {
     this.updateFlippedCamera();
     this.controls.update();
 
+     // Remove buffer texture from scene when it is rendered to
+    this.waterMaterial.visible = false;
     this.renderMirrorImage();
+    this.renderRefractionImage();
+    this.waterMaterial.visible = true;
+    this.renderer.clippingPlanes = [this.dummyPlane_];
     this.renderer.render(this.scene_, this.camera_);
     requestAnimationFrame(this.loop.bind(this));
   }
