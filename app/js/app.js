@@ -17,6 +17,7 @@ class Application {
   initThreeJs_(container) {
     this.WIDTH = window.innerWidth;
     this.HEIGHT = window.innerHeight;
+    this.clock_ = new THREE.Clock();
     this.camera_ =
         new THREE.PerspectiveCamera(60, this.WIDTH / this.HEIGHT, 1, 20000);
     this.camera_.position.set(0, 300, 500);
@@ -125,12 +126,16 @@ class Application {
 
     const waterUniforms = {
       time: {value: 0},
+      waterMoveFactor: {value: 0.0},
       reflectionTexture: {value: this.reflectionRenderTarget.texture},
       refractionTexture: {value: this.refractionRenderTarget.texture},
+      dudvTexture: {value: THREE.ImageUtils.loadTexture('images/waterDUDV.png')},
       // For Fresnel
       cameraPositionWorld: {value: this.camera_.position},
       lightPositionWorld: {value: light.position},
     };
+
+    waterUniforms.dudvTexture.value.wrapS = waterUniforms.dudvTexture.value.wrapT = THREE.RepeatWrapping;
 
     this.waterMaterial = new THREE.ShaderMaterial({
       vertexShader: this.shaders_['water_vert'],
@@ -140,7 +145,7 @@ class Application {
       side: THREE.BackSide,
     });
 
-    const waterGeometry = new THREE.PlaneGeometry(200, 250, 1, 1);
+    const waterGeometry = new THREE.PlaneGeometry(2000, 2500, 1, 1);
     const waterMesh = new THREE.Mesh(waterGeometry, this.waterMaterial)
     waterMesh.rotation.x = Math.PI / 2;
 
@@ -189,6 +194,10 @@ class Application {
     this.cubeMesh.rotation.x += 0.005;
     this.cubeMesh.rotation.y += 0.01;
     this.waterMaterial.uniforms.time.value += 0.05;
+    this.waterMaterial.uniforms.waterMoveFactor.value += 0.03 * this.clock_.getDelta();
+   // if ( this.waterMaterial.uniforms.waterMoveFactor.value >= 1.0)
+     // this.waterMaterial.uniforms.waterMoveFactor.value = 0.0;
+    this.waterMaterial.uniforms.waterMoveFactor.value %= 1.0;
   }
 
   loop() {

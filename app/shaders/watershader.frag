@@ -1,13 +1,18 @@
 uniform float time;
+uniform float waterMoveFactor;
 uniform sampler2D reflectionTexture;
 uniform sampler2D refractionTexture;
+uniform sampler2D dudvTexture; // For noise
 
 varying vec2 vUv;
+varying vec2 vUvTiled;
+varying vec2 vUvManual;
 varying vec4 posClipSpace;
 varying vec3 toCamera;
 varying vec3 fromLight;
 
 const vec4 waterColor = vec4(0.0, 0.3, 0.5, 1.0);
+const float waveStrength = 0.02;
 
 // Phong specular term => Ks * (R dot V)^n
 vec3 calculateSpecularHighlights(in float totalNoise, in vec3 unitToCamera) {
@@ -39,7 +44,12 @@ float calculateFresnel(in vec3 unitToCamera) {
 }
 
 void main() {
-  float noise = calculateSimplexNoise();
+  //float noise = calculateSimplexNoise();
+  // Dudv map
+  // Values are stored as positive in the map
+  vec2 noise_1 = (texture2D(dudvTexture, vec2(vUv.x + waterMoveFactor, vUv.y)).rg * 2.0 - 1.0) * waveStrength;
+  vec2 noise_2 = (texture2D(dudvTexture, vec2(-vUv.x, vUv.y + waterMoveFactor)).rg * 2.0 - 1.0) * waveStrength;
+  vec2 noise = noise_1 + noise_2;
 
   vec2 ndc = posClipSpace.xy / posClipSpace.w;
   vec2 screenCoords = ndc / 2.0 + 0.5;
@@ -47,11 +57,10 @@ void main() {
   vec2 refractionCoords = vec2(screenCoords.x, screenCoords.y);
 
   vec3 unitToCamera = normalize(toCamera);
-
   float fresnelTerm = calculateFresnel(unitToCamera);
-  vec3 specularHighlights = calculateSpecularHighlights(noise, unitToCamera);
+  //vec3 specularHighlights = calculateSpecularHighlights(noise, unitToCamera);
 
   gl_FragColor = mix(texture2D(reflectionTexture, reflectionCoords + noise),
                      texture2D(refractionTexture, refractionCoords + noise), fresnelTerm);
-  gl_FragColor = mix(gl_FragColor, waterColor, 0.25) + vec4(specularHighlights, 0.0);
+  gl_FragColor = mix(gl_FragColor, waterColor, 0.25); //+ vec4(specularHighlights, 0.0);
 }
