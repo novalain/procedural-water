@@ -19,7 +19,7 @@ class Application {
     this.HEIGHT = window.innerHeight;
     this.clock_ = new THREE.Clock();
     this.camera_ =
-        new THREE.PerspectiveCamera(60, this.WIDTH / this.HEIGHT, 1, 20000);
+        new THREE.PerspectiveCamera(60, this.WIDTH / this.HEIGHT, 1, 200000);
     this.camera_.position.set(0, 300, 500);
     this.camera_.lookAt(new THREE.Vector3(0, 0, 0));
 
@@ -59,7 +59,7 @@ class Application {
         url => new THREE.MeshBasicMaterial(
             {map: textureLoader.load(url), side: THREE.BackSide}));
     const skyboxMaterial = new THREE.MeshFaceMaterial(materialArray);
-    const skyboxGeom = new THREE.CubeGeometry(1000, 1000, 1000, 1, 1, 1);
+    const skyboxGeom = new THREE.CubeGeometry(20000, 20000, 25000, 1, 1, 1);
     const skybox = new THREE.Mesh(skyboxGeom, skyboxMaterial);
     this.scene_.add(skybox);
   }
@@ -147,7 +147,7 @@ class Application {
       side: THREE.BackSide,
     });
 
-    const waterGeometry = new THREE.PlaneGeometry(2000, 2500, 1, 1);
+    const waterGeometry = new THREE.PlaneGeometry(20000, 25000, 1, 1);
     const waterMesh = new THREE.Mesh(waterGeometry, this.waterMaterial)
     waterMesh.rotation.x = Math.PI / 2;
 

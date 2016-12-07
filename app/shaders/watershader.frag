@@ -82,5 +82,5 @@ void main() {
 
   gl_FragColor = mix(texture2D(reflectionTexture, reflectionCoords + noise),
                      texture2D(refractionTexture, refractionCoords + noise), fresnelTerm);
-  gl_FragColor = mix(gl_FragColor, waterColor, 0.25) + vec4(specularHighlights, 0.0);
+  gl_FragColor = mix(gl_FragColor, waterColor, 0.3) + vec4(specularHighlights, 0.0);
 }
