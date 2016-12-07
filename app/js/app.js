@@ -130,12 +130,14 @@ class Application {
       reflectionTexture: {value: this.reflectionRenderTarget.texture},
       refractionTexture: {value: this.refractionRenderTarget.texture},
       dudvTexture: {value: THREE.ImageUtils.loadTexture('images/waterDUDV.png')},
+      normalMap: {value: THREE.ImageUtils.loadTexture('images/waterNormalMap.png')},
       // For Fresnel
       cameraPositionWorld: {value: this.camera_.position},
       lightPositionWorld: {value: light.position},
     };
 
     waterUniforms.dudvTexture.value.wrapS = waterUniforms.dudvTexture.value.wrapT = THREE.RepeatWrapping;
+    waterUniforms.normalMap.value.wrapS = waterUniforms.normalMap.value.wrapT = THREE.RepeatWrapping;
 
     this.waterMaterial = new THREE.ShaderMaterial({
       vertexShader: this.shaders_['water_vert'],
