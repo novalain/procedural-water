@@ -26,7 +26,7 @@ class Application {
     this.reflectionPlane_ = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     this.refractionPlane_ = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
     // TODO: How to remove clipping plane from Three.JS without lag?
-    this.dummyPlane_ = new THREE.Plane(new THREE.Vector3(0, 1, 0), 5000);
+    this.dummyPlane_ = new THREE.Plane(new THREE.Vector3(0, 1, 0), 200000);
 
     this.renderer_ = new THREE.WebGLRenderer({
       antialias: true,
@@ -64,21 +64,32 @@ class Application {
     this.scene_.add(skybox);
   }
 
-  /*
   setupSkyDome_() {
     const textureLoader = new THREE.TextureLoader();
-    const skyGeo = new THREE.SphereGeometry(5000, 25, 25);
+    const skyGeo = new THREE.SphereGeometry(15000, 25, 25);
+
+    //skyGeo.scale.set(-1, 1, 1);
+    //skyGeo.eulerOrder = 'XZY';
+    //skyGeo.renderDepth = 1000.0;
+
+
+
     const texture = textureLoader.load("images/warped.jpg");
-    const material = new THREE.MeshPhongMaterial({
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    const material = new THREE.MeshBasicMaterial({
       map: texture, side:THREE.BackSide,
     });
     const sky = new THREE.Mesh(skyGeo, material);
+
+    //sky.scale.set(1, -1, 1);
+    //sky.eulerOrder = 'ZYX';
+
     this.scene_.add(sky);
-  } */
+  }
 
   setupBottom_() {
     const textureLoader = new THREE.TextureLoader();
-    const bottomGeometry = new THREE.PlaneGeometry(200, 250, 1, 1);
+    const bottomGeometry = new THREE.PlaneGeometry(250, 250, 1, 1);
     const img = textureLoader.load('images/checkerboard.jpg');
     img.wrapS = img.wrapT = THREE.RepeatWrapping;
     img.repeat.set(3, 3);
@@ -86,7 +97,7 @@ class Application {
         new THREE.MeshLambertMaterial({map: img, side: THREE.BackSide});
     const bottomMesh = new THREE.Mesh(bottomGeometry, bottomMaterial);
     bottomMesh.rotation.x = Math.PI / 2;
-    bottomMesh.position.y -= 30;
+    bottomMesh.position.y -= 50;
     this.scene_.add(bottomMesh);
   }
 
@@ -147,7 +158,7 @@ class Application {
       side: THREE.BackSide,
     });
 
-    const waterGeometry = new THREE.PlaneGeometry(20000, 25000, 1, 1);
+    const waterGeometry = new THREE.PlaneGeometry(25000, 25000, 1, 1);
     const waterMesh = new THREE.Mesh(waterGeometry, this.waterMaterial)
     waterMesh.rotation.x = Math.PI / 2;
 
@@ -160,7 +171,8 @@ class Application {
     this.cubeMesh = new THREE.Mesh(geometry, cubeMaterial);
     this.cubeMesh.position.y += 40;
 
-    this.setupSkybox_();
+    //this.setupSkybox_();
+    this.setupSkyDome_();
     this.setupBottom_();
 
     /// TODO: Keep all scene objects that needs to be updated in a list
