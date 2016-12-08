@@ -111,8 +111,12 @@ class Application {
         window.innerWidth, window.innerHeight,
         {minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
 
-    const light = new THREE.DirectionalLight(0xffffff);
-    light.position.set(0, 1, 1).normalize();
+  //  const light = new THREE.DirectionalLight(0xffffff);
+   // light.position.set(0, 1, 1).normalize();
+
+    var light = new THREE.DirectionalLight(0xffffff);
+    light.position.set(-600, 300, 600);
+
     const geometry = new THREE.BoxGeometry(30, 30, 30);
     for (var i = 0; i < geometry.faces.length; i++) {
       geometry.faces[i].color.setHex(Math.random() * 0xffffff);
@@ -142,6 +146,7 @@ class Application {
       refractionTexture: {value: this.refractionRenderTarget.texture},
       dudvTexture: {value: THREE.ImageUtils.loadTexture('images/waterDUDV.png')},
       normalMap: {value: THREE.ImageUtils.loadTexture('images/waterNormalMap.png')},
+      normalMap2: {value: THREE.ImageUtils.loadTexture('images/waterNormalMap2.jpg')},
       // For Fresnel
       cameraPositionWorld: {value: this.camera_.position},
       lightPositionWorld: {value: light.position},
@@ -149,6 +154,7 @@ class Application {
 
     waterUniforms.dudvTexture.value.wrapS = waterUniforms.dudvTexture.value.wrapT = THREE.RepeatWrapping;
     waterUniforms.normalMap.value.wrapS = waterUniforms.normalMap.value.wrapT = THREE.RepeatWrapping;
+    waterUniforms.normalMap2.value.wrapS = waterUniforms.normalMap2.value.wrapT = THREE.RepeatWrapping;
 
     this.waterMaterial = new THREE.ShaderMaterial({
       vertexShader: this.shaders_['water_vert'],
