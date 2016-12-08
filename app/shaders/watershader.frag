@@ -42,10 +42,16 @@ float calculateSimplexNoise() {
 }
 
 float calculateFresnel(in vec3 unitToCamera) {
-  const float fresnelFactor = 1.75;
+  /*const float fresnelFactor = 1.75;
   // TODO: Replace hardcoded vec with water plane's normal
   float fresnelTerm = dot(unitToCamera, vec3(0.0, 1.0, 0.0));
-  fresnelTerm = pow(fresnelTerm, fresnelFactor);
+  fresnelTerm = pow(fresnelTerm, fresnelFactor);*/
+
+  // Shlicks approximation
+  float theta1 = max(dot(unitToCamera, vec3(0.0, 1.0, 0.0)), 0.0);
+  float rf0 = 0.02;
+  float fresnelTerm = rf0 + (1.0 - rf0)*pow((1.0 - theta1), 5.0);
+
   return fresnelTerm;
 }
 

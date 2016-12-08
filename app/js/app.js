@@ -36,6 +36,10 @@ class Application {
     container.appendChild(this.renderer_.domElement);
 
     this.controls_ = new THREE.OrbitControls(this.camera_);
+    this.controls_.minDistance = 10;
+    this.controls_.maxDistance = 50;
+    this.controls_.update();
+    //this.controls_.zoomSpeed = 10.0
   }
 
   listen_() { window.addEventListener('resize', this.onResize_.bind(this)); }
