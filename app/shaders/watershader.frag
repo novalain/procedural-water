@@ -13,6 +13,7 @@ varying vec4 posClipSpace;
 varying vec3 toCamera;
 varying vec3 fromLight;
 varying vec3 worldPosition;
+varying vec3 cameraPositionWorldOut;
 
 const vec4 waterColor = vec4(0.0, 0.3, 0.5, 0.9);
 //const vec3 waterColor = vec3(0.3, 0.5, 0.9);
@@ -41,14 +42,14 @@ float calculateSimplexNoise() {
   return totalNoise;
 }
 
-float calculateFresnel(in vec3 unitToCamera) {
-  /*const float fresnelFactor = 1.75;
-  // TODO: Replace hardcoded vec with water plane's normal
-  float fresnelTerm = dot(unitToCamera, vec3(0.0, 1.0, 0.0));
-  fresnelTerm = pow(fresnelTerm, fresnelFactor);*/
+float calculateFresnel(in vec3 unitToCamera, in vec3 perturbedNormal) {
+  const float fresnelFactor = 1.75;
+ // TODO: Replace hardcoded vec with water plane's normal
+  /* float fresnelTerm = dot(unitToCamera, vec3(0.0, 1.0, 0.0));
+  fresnelTerm = pow(fresnelTerm, fresnelFactor); */
 
   // Shlicks approximation
-  float theta1 = max(dot(unitToCamera, vec3(0.0, 1.0, 0.0)), 0.0);
+  float theta1 = max(dot(unitToCamera, perturbedNormal), 0.0);
   float rf0 = 0.02;
   float fresnelTerm = rf0 + (1.0 - rf0)*pow((1.0 - theta1), 5.0);
 
@@ -97,10 +98,11 @@ void sunLight(const vec3 surfaceNormal, const vec3 eyeDirection, float shiny,
               inout vec3 specularColor){
     vec3 sunColor = vec3(1.0, 1.0, 1.0);
     //sunColor = normalize(sunColor);
-    vec3 reflection = normalize(reflect(fromLight, surfaceNormal));
+    vec3 unitFromLight = normalize(fromLight);
+    vec3 reflection = normalize(reflect(unitFromLight, surfaceNormal));
     float direction = max(0.0, dot(eyeDirection, reflection));
     specularColor += pow(direction, shiny)*sunColor*spec;
-    diffuseColor += max(dot(-fromLight, surfaceNormal),0.0)*sunColor*diffuse;
+    diffuseColor += max(dot(-unitFromLight, surfaceNormal),0.0)*sunColor*diffuse;
 }
 
 void main() {
@@ -122,17 +124,19 @@ void main() {
   vec2 reflectionCoords = vec2(1.0 - screenCoords.x, screenCoords.y);
   vec2 refractionCoords = vec2(screenCoords.x, screenCoords.y);
 
-  vec3 unitToCamera = normalize(toCamera);
-  float fresnelTerm = calculateFresnel(unitToCamera);
-  //vec3 specularHighlights = calculateSpecularHighlights(noise, unitToCamera);
 
   // Normal map
-  vec4 normalMapColor = texture2D(normalMap, noiseTexCoords);
+  vec4 normalMapColor = texture2D(normalMap, noise);
   vec3 perturbedNormal = vec3(normalMapColor.r * 2.0 - 1.0, normalMapColor.b, normalMapColor.g * 2.0 - 1.0);
   perturbedNormal = normalize(perturbedNormal);
 
+  vec3 unitToCamera = normalize(toCamera);
+  float fresnelTerm = calculateFresnel(unitToCamera, perturbedNormal);
+  //vec3 specularHighlights = calculateSpecularHighlights(noise, unitToCamera);
+
   // Lightning with normal map
-  vec3 reflectedLight = reflect(normalize(fromLight), perturbedNormal);
+  vec3 unitFromLight = normalize(fromLight);
+  vec3 reflectedLight = reflect(normalize(unitFromLight), perturbedNormal);
   float specular = max(dot(reflectedLight, unitToCamera), 0.0);
   specular = pow(specular, shineDamper);
   vec3 specularHighlights = vec3(1.0, 1.0, 1.0) * specular * reflectivity;
@@ -142,65 +146,65 @@ void main() {
   // vec3 specular = vec3(0.0);
   // sunLight(perturbedNormal, toCamera, 100.0, 2.0, 0.5, diffuse, specular);
 
-  gl_FragColor = mix(texture2D(reflectionTexture, reflectionCoords + noise),
-                     texture2D(refractionTexture, refractionCoords + noise), fresnelTerm);
+  // Scatter
+  vec3 scatter_tmp = max(0.0, dot(perturbedNormal, unitToCamera)) * vec3(0.0, 0.1, 0.07);
+  vec4 scatter = vec4(scatter_tmp, 1.0) * 5.0;
+
+  vec3 color = vec3(0.3, 0.5, 0.9);
+
+  vec4 refractionSample = texture2D(refractionTexture, refractionCoords + noise);
+  float depth = length(worldPosition - cameraPositionWorldOut);
+  float waterDepth = min(refractionSample.a - depth, 40.0);
+  vec3 absorbtion = min((waterDepth/35.0)*vec3(2.0, 1.05, 1.0), vec3(1.0));
+  vec3 refractionColor = mix(vec3(refractionSample)*0.5, vec3(color), absorbtion);
+
+  gl_FragColor = mix(refractionSample + scatter,
+                     texture2D(reflectionTexture, reflectionCoords + noise), fresnelTerm);
   gl_FragColor = mix(gl_FragColor, waterColor, 0.3) + vec4(specularHighlights, 0.0);
 
   // NEW
 
-  // vec4 noise = getNoise(worldPosition.xz, normalMap); // or vUv?
-  // // Let blue component be the y component in the normal vector, can be positive
-  // // Convert x and z components to be [0,1] => [-1, 1]
-  // vec3 perturbedSurfaceNormal = normalize((noise.xzy * vec3(2.0, 1.0, 2.0)));
+/*   vec4 noise = getNoise(worldPosition.xz, normalMap); // or vUv?
+  // Let blue component be the y component in the normal vector, can be positive
+  // Convert x and z components to be [0,1] => [-1, 1]
+  vec3 perturbedSurfaceNormal = normalize((noise.xzy * vec3(2.0, 1.0, 2.0)));
 
-  // vec3 diffuse = vec3(0.0);
-  // vec3 specular = vec3(0.0);
+  vec3 diffuse = vec3(0.0);
+  vec3 specular = vec3(0.0);
 
-  // vec3 worldToEye = toCamera;
-  // vec3 eyeDirection = normalize(worldToEye);
+  vec3 worldToEye = toCamera;
+  vec3 eyeDirection = normalize(worldToEye);
 
-  // sunLight(perturbedSurfaceNormal, eyeDirection, 100.0, 2.0, 0.5, diffuse, specular);
-  // vec4 dudvNoise = getNoise(worldPosition.xz, dudvTexture);
-  // // Reflection
-  // float dist = length(worldToEye);
-  // //vec2 screen = (posClipSpace.xy / posClipSpace.z + 1.0) * 0.5;
-  // vec2 ndc = posClipSpace.xy / posClipSpace.w;
-  // vec2 screenCoords = ndc / 2.0 + 0.5;
-  // vec2 reflectionCoords = vec2(1.0 - screenCoords.x, screenCoords.y);
-  // float distortionFactor = max(dist/100.0, 10.0);
-  // vec2 distortion = dudvNoise.xy / distortionFactor; // Further away less noise
-  // vec3 reflectionSample = vec3(texture2D(reflectionTexture, reflectionCoords + distortion));
+  sunLight(perturbedSurfaceNormal, eyeDirection, 100.0, 2.0, 0.5, diffuse, specular);
+  vec4 dudvNoise = getNoise(worldPosition.xz, dudvTexture);
+  // Reflection
+  float dist = length(worldToEye);
+  //vec2 screen = (posClipSpace.xy / posClipSpace.z + 1.0) * 0.5;
+  vec2 ndc = posClipSpace.xy / posClipSpace.w;
+  vec2 screenCoords = ndc / 2.0 + 0.5;
+  vec2 reflectionCoords = vec2(1.0 - screenCoords.x, screenCoords.y);
+  vec2 refractionCoords = screenCoords.xy;
+  float distortionFactor = max(dist/100.0, 10.0);
+  vec2 distortion = dudvNoise.xy / distortionFactor; // Further away less noise
 
-  // vec3 color = vec3(0.3, 0.5, 0.5);
-  // gl_FragColor = vec4(color * (reflectionSample+vec3(0.3)) * (diffuse + specular + 0.2) * 4.0, 1.0);
- // gl_FragColor = vec4((diffuse+specular+vec3(0.1))*vec3(0.3, 0.5, 0.9), 1.0);
+  vec3 reflectionSample = vec3(texture2D(reflectionTexture, reflectionCoords + distortion));
+  vec3 refractionSample = vec3(texture2D(refractionTexture, refractionCoords - distortion));
 
-  // THIRD NEW
-  // vec2 noiseTexCoords = getdudvNoise(worldPosition.xz);
+  // water color
+  vec3 color = vec3(0.3, 0.5, 0.5);
 
-  // vec4 normalMapColor = texture2D(normalMap, noiseTexCoords);
-  // vec3 perturbedNormal = vec3(normalMapColor.r * 2.0 - 1.0, normalMapColor.b, normalMapColor.g * 2.0 - 1.0);
-  // perturbedNormal = normalize(perturbedNormal);
+  // Fresnel
+  float reflectance = calculateFresnel(eyeDirection, perturbedSurfaceNormal);
 
-  // vec3 diffuse = vec3(0.0);
-  // vec3 specular = vec3(0.0);
+  // Scattering
+  vec3 scatter = max(0.0, dot(perturbedSurfaceNormal, eyeDirection))*vec3(0.0, 0.1, 0.07) * 2.0;
 
-  // vec3 worldToEye = toCamera;
-  // vec3 eyeDirection = normalize(worldToEye);
+  // Absorbation
+   float depth = length(worldPosition - toCamera);
+  float waterDepth = min(vec4(refractionSample, 0.99).a - depth, 40.0);
+  vec3 absorbtion = min((waterDepth/35.0)*vec3(2.0, 1.05, 1.0), vec3(1.0));
+  vec3 refractionColor = mix(vec3(refractionSample)*0.5, color, absorbtion); 
 
-  // sunLight(perturbedNormal, eyeDirection, 100.0, 2.0, 0.5, diffuse, specular);
-
-  // // Reflection
-
-  // float dist = length(worldToEye);
-  // vec2 screen = (posClipSpace.xy / posClipSpace.w) / 2.0 + 0.5;
-  // vec2 reflectionCoords = vec2(1.0 - screen.x, screen.y);
-  // float distortionFactor = max(dist/100.0, 10.0);
-  // vec2 distortion = noiseTexCoords.xy / distortionFactor;
-  // vec3 reflectionSample = vec3(texture2D(reflectionTexture, reflectionCoords + noiseTexCoords));
-
-  // vec3 color = vec3(0.3, 0.5, 0.5);
-  // //gl_FragColor = vec4(color * (reflectionSample+vec3(0.1)) * (diffuse + specular + 0.2) * 2.0, 1.0);
-  // gl_FragColor = vec4((diffuse+specular+vec3(0.1))*vec3(0.3, 0.5, 0.9), 1.0);
-
+  vec3 albedo = mix((scatter+(color*refractionSample*diffuse + vec3(0.2)))*0.6, (vec3(0.1)+reflectionSample*0.9+specular), reflectance);
+  gl_FragColor = vec4(albedo, 1.0);//vec4(color * (reflectionSample+vec3(0.3)) * (diffuse + specular + 0.2) * 4.0, 1.0); */
 }

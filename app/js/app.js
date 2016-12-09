@@ -37,7 +37,7 @@ class Application {
 
     this.controls_ = new THREE.OrbitControls(this.camera_);
     this.controls_.minDistance = 10;
-    this.controls_.maxDistance = 50;
+    this.controls_.maxDistance = 1000;
     this.controls_.update();
     //this.controls_.zoomSpeed = 10.0
   }
@@ -63,7 +63,7 @@ class Application {
         url => new THREE.MeshBasicMaterial(
             {map: textureLoader.load(url), side: THREE.BackSide}));
     const skyboxMaterial = new THREE.MeshFaceMaterial(materialArray);
-    const skyboxGeom = new THREE.CubeGeometry(20000, 20000, 25000, 1, 1, 1);
+    const skyboxGeom = new THREE.CubeGeometry(20000, 20000, 20000, 1, 1, 1);
     const skybox = new THREE.Mesh(skyboxGeom, skyboxMaterial);
     this.scene_.add(skybox);
   }
@@ -181,8 +181,8 @@ class Application {
     this.cubeMesh = new THREE.Mesh(geometry, cubeMaterial);
     this.cubeMesh.position.y += 40;
 
-    //this.setupSkybox_();
-    this.setupSkyDome_();
+    this.setupSkybox_();
+    //this.setupSkyDome_();
     this.setupBottom_();
 
     /// TODO: Keep all scene objects that needs to be updated in a list
@@ -218,7 +218,7 @@ class Application {
     this.cubeMesh.rotation.x += 0.005;
     this.cubeMesh.rotation.y += 0.01;
     this.waterMaterial.uniforms.time.value += 0.05;
-    this.waterMaterial.uniforms.waterMoveFactor.value += 0.03 * this.clock_.getDelta();
+    this.waterMaterial.uniforms.waterMoveFactor.value += 0.05 * this.clock_.getDelta();
    // if ( this.waterMaterial.uniforms.waterMoveFactor.value >= 1.0)
      // this.waterMaterial.uniforms.waterMoveFactor.value = 0.0;
     this.waterMaterial.uniforms.waterMoveFactor.value %= 1.0;
