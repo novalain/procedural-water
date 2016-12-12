@@ -6,32 +6,39 @@ uniform sampler2D dudvTexture; // For noise
 uniform sampler2D normalMap;
 uniform sampler2D normalMap2;
 
+// Uniforms from GUI
+uniform float waveStrength;
+uniform float scatterConst;
+uniform vec4 waterColor;
+uniform float shineDamper;// = 20.0;
+uniform float ks; //= 0.6;
+uniform float kd;// = 0.0;
+uniform float ka;// = 1.0;
+
 varying vec2 vUv;
 varying vec2 vUvTiled;
-varying vec2 vUvManual;
 varying vec4 posClipSpace;
 varying vec3 toCamera;
 varying vec3 fromLight;
 varying vec3 worldPosition;
 varying vec3 cameraPositionWorldOut;
 
-const vec4 waterColor = vec4(0.0, 0.3, 0.5, 0.9);
+
 //const vec3 waterColor = vec3(0.3, 0.5, 0.9);
-const float waveStrength = 0.02;
+//const float waveStrength = 0.02;
 
 // Lightning
-const float shineDamper = 20.0;
-const float reflectivity = 0.6;
+
 
 // Phong specular term => Ks * (R dot V)^n
-vec3 calculateSpecularHighlights(in float totalNoise, in vec3 unitToCamera) {
-  vec3 perturbedNormal = normalize(vec3(totalNoise, 0.002, totalNoise));
-  vec3 reflectedLight = reflect(normalize(fromLight), perturbedNormal);
-  float specular = max(dot(reflectedLight, unitToCamera), 0.0);
-  specular = pow(specular, shineDamper);
-  vec3 result = vec3(1.0, 1.0, 1.0) * specular * reflectivity;
-  return result;
-}
+// vec3 calculateSpecularHighlights(in float totalNoise, in vec3 unitToCamera) {
+//   vec3 perturbedNormal = normalize(vec3(totalNoise, 0.002, totalNoise));
+//   vec3 reflectedLight = reflect(normalize(fromLight), perturbedNormal);
+//   float specular = max(dot(reflectedLight, unitToCamera), 0.0);
+//   specular = pow(specular, shineDamper);
+//   vec3 result = vec3(1.0, 1.0, 1.0) * specular * ks;
+//   return result;
+// }
 
 float calculateSimplexNoise() {
   const float waveStrength = 0.02;
@@ -132,32 +139,41 @@ void main() {
   //vec3 specularHighlights = calculateSpecularHighlights(noise, unitToCamera);
 
   // Lightning with normal map
-  vec3 unitFromLight = normalize(fromLight);
-  vec3 reflectedLight = reflect(normalize(unitFromLight), perturbedNormal);
-  float specular = max(dot(reflectedLight, unitToCamera), 0.0);
-  specular = pow(specular, shineDamper);
-  vec3 specularHighlights = vec3(1.0, 1.0, 1.0) * specular * reflectivity;
+  // vec3 unitFromLight = normalize(fromLight);
+  // vec3 reflectedLight = reflect(normalize(unitFromLight), perturbedNormal);
+  // float specular = max(dot(reflectedLight, unitToCamera), 0.0);
+  // specular = pow(specular, shineDamper);
+  // vec3 specularHighlights = vec3(1.0, 1.0, 1.0) * specular * reflectivity;
 
   // New lightning
-  vec3 diffuse = vec3(0.0);
-  vec3 specularz = vec3(0.0);
-  sunLight(perturbedNormal, unitToCamera, 20.0, 0.6, 2.0, diffuse, specularz);
+  vec3 diffuseColor = vec3(0.0);
+  vec3 specularColor = vec3(0.0);
+  sunLight(perturbedNormal, unitToCamera, shineDamper, ks, kd, diffuseColor, specularColor);
 
   // Scatter
   vec3 scatter_tmp = max(0.0, dot(perturbedNormal, unitToCamera)) * vec3(0.0, 0.1, 0.07);
-  vec4 scatter = vec4(scatter_tmp, 1.0) * 2.0;
+  vec4 scatter = vec4(scatter_tmp, 1.0) * scatterConst;
 
-  vec3 color = vec3(0.3, 0.5, 0.9);
+  //vec3 color = vec3(0.3, 0.5, 0.9);
 
   vec4 refractionSample = texture2D(refractionTexture, refractionCoords + noise);
-  float depth = length(worldPosition - cameraPositionWorldOut);
-  float waterDepth = min(refractionSample.a - depth, 40.0);
-  vec3 absorbtion = min((waterDepth/35.0)*vec3(2.0, 1.05, 1.0), vec3(1.0));
-  vec3 refractionColor = mix(vec3(refractionSample)*0.5, vec3(color), absorbtion);
+  // float depth = length(worldPosition - cameraPositionWorldOut);
+  // float waterDepth = min(refractionSample.a - depth, 40.0);
+  // vec3 absorbtion = min((waterDepth/35.0)*vec3(2.0, 1.05, 1.0), vec3(1.0));
+  // vec3 refractionColor = mix(vec3(refractionSample)*0.5, vec3(color), absorbtion);
 
   gl_FragColor = mix(refractionSample + scatter,
                      texture2D(reflectionTexture, reflectionCoords + noise), fresnelTerm);
-  gl_FragColor = mix(gl_FragColor, waterColor, 0.3)/**vec4(diffuse, 1.0)*/ + vec4(specularz, 1.0); //+ vec4(specularHighlights, 1.0);
+
+  vec4 waterColorFinal = mix(gl_FragColor, waterColor, 0.3);
+  gl_FragColor = waterColorFinal * ka + waterColorFinal * vec4(diffuseColor, 1.0) + vec4(vec3(1.0, 1.0, 1.0), 1.0) * vec4(specularColor, 1.0);
+
+
+//  gl_FragColor = mix(gl_FragColor, waterColor, 0.3) + vec4(diffuse, 1.0) +  vec4(specularz, 1.0); //+ vec4(specularHighlights, 1.0);
+
+  //vec3 colorLinear = ambientColor +
+    //                 lambertian * diffuseColor +
+      //               specular * specColor;
 
   // NEW
 

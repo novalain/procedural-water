@@ -3,7 +3,6 @@ uniform vec3 lightPositionWorld;
 
 varying vec4 posClipSpace;
 varying vec2 vUv;
-varying vec2 vUvManual;
 varying vec2 vUvTiled;
 varying vec3 toCamera;
 varying vec3 fromLight;

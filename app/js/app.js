@@ -4,6 +4,7 @@ class Application {
   constructor(container, shaders) {
     this.initStats_(container);
     this.initThreeJs_(container);
+    this.initGUIVars();
     this.setupScene_(shaders);
     this.listen_();
   }
@@ -11,6 +12,17 @@ class Application {
   initStats_(container) {
     this.stats_ = new Stats();
     container.appendChild(this.stats_.dom);
+  }
+
+  initGUIVars() {
+
+    this.waveStrength = 0.02;
+    this.scatterConst = 2.0;
+    this.shineDamper = 20.0;
+    this.ks = 0.6;
+    this.kd = 0.1;
+    this.ka = 1.0;
+
   }
 
   // TODO: Cleanup member variables
@@ -35,7 +47,7 @@ class Application {
     this.renderer_.setSize(this.WIDTH, this.HEIGHT);
     container.appendChild(this.renderer_.domElement);
 
-    this.controls_ = new THREE.OrbitControls(this.camera_);
+    this.controls_ = new THREE.OrbitControls(this.camera_, this.renderer_.domElement);
     this.controls_.minDistance = 10;
     this.controls_.maxDistance = 1000;
     this.controls_.update();
@@ -143,11 +155,18 @@ class Application {
     torusMesh.position.x -= 60;
     torusMesh.position.y += 30;
 
-    const waterUniforms = {
+    this.waterUniforms = {
       time: {value: 0},
       waterMoveFactor: {value: 0.0},
+      waveStrength: {value: this.waveStrength},
+      waterColor: {value: new THREE.Vector3(0.0, 0.3, 0.5, 0.9)},
+      scatterConst: {value: this.scatterConst},
       reflectionTexture: {value: this.reflectionRenderTarget.texture},
       refractionTexture: {value: this.refractionRenderTarget.texture},
+      shineDamper: {value: this.shineDamper},
+      ks: {value: this.ks},
+      kd: {value: this.kd},
+      ka: {value: this.ka},
       dudvTexture: {value: THREE.ImageUtils.loadTexture('images/waterDUDV.png')},
       normalMap: {value: THREE.ImageUtils.loadTexture('images/waterNormalMap.png')},
       normalMap2: {value: THREE.ImageUtils.loadTexture('images/waterNormalMap2.jpg')},
@@ -156,15 +175,15 @@ class Application {
       lightPositionWorld: {value: light.position},
     };
 
-    waterUniforms.dudvTexture.value.wrapS = waterUniforms.dudvTexture.value.wrapT = THREE.RepeatWrapping;
-    waterUniforms.normalMap.value.wrapS = waterUniforms.normalMap.value.wrapT = THREE.RepeatWrapping;
-    waterUniforms.normalMap2.value.wrapS = waterUniforms.normalMap2.value.wrapT = THREE.RepeatWrapping;
+    this.waterUniforms.dudvTexture.value.wrapS = this.waterUniforms.dudvTexture.value.wrapT = THREE.RepeatWrapping;
+    this.waterUniforms.normalMap.value.wrapS = this.waterUniforms.normalMap.value.wrapT = THREE.RepeatWrapping;
+    this.waterUniforms.normalMap2.value.wrapS = this.waterUniforms.normalMap2.value.wrapT = THREE.RepeatWrapping;
 
     this.waterMaterial = new THREE.ShaderMaterial({
       vertexShader: this.shaders_['water_vert'],
       fragmentShader:
           this.shaders_['simplex_noise'] + this.shaders_['water_frag'],
-      uniforms: waterUniforms,
+      uniforms: this.waterUniforms,
       side: THREE.BackSide,
     });
 
@@ -224,11 +243,22 @@ class Application {
     this.waterMaterial.uniforms.waterMoveFactor.value %= 1.0;
   }
 
+  updateUniforms_() {
+    this.waterMaterial.uniforms.waveStrength.value = this.waveStrength;
+    this.waterMaterial.uniforms.scatterConst.value = this.scatterConst;
+    this.waterMaterial.uniforms.shineDamper.value = this.shineDamper;
+    this.waterMaterial.uniforms.ks.value = this.ks;
+    this.waterMaterial.uniforms.kd.value = this.kd;
+    this.waterMaterial.uniforms.ka.value = this.ka;
+  }
+
   loop() {
     this.stats_.begin();
     this.controls_.update();
 
     this.updateScene_();
+
+    this.updateUniforms_();
     this.updateMirrorCamera_();
     // Remove buffer texture from scene when it is rendered to
     this.waterMaterial.visible = false;
