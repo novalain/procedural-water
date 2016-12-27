@@ -105,12 +105,12 @@ class Application {
 
   setupBottom_() {
     const textureLoader = new THREE.TextureLoader();
-    const bottomGeometry = new THREE.PlaneGeometry(250, 250, 1, 1);
+    const bottomGeometry = new THREE.PlaneGeometry(500, 500, 10, 10);
     const img = textureLoader.load('images/checkerboard.jpg');
     img.wrapS = img.wrapT = THREE.RepeatWrapping;
     img.repeat.set(3, 3);
     const bottomMaterial =
-        new THREE.MeshLambertMaterial({map: img, side: THREE.BackSide});
+        new THREE.MeshLambertMaterial({map: img, side: THREE.BackSide, wireframe: false});
     const bottomMesh = new THREE.Mesh(bottomGeometry, bottomMaterial);
     bottomMesh.rotation.x = Math.PI / 2;
     bottomMesh.position.y -= 50;

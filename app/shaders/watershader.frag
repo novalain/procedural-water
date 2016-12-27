@@ -41,11 +41,19 @@ varying vec3 cameraPositionWorldOut;
 // }
 
 float calculateSimplexNoise() {
-  const float waveStrength = 0.02;
-  const float scaleFactor = 100.0;
+  //const float waveStrength = 0.02;
+  const float scaleFactor = 1.0;
   //float noiseSeed1 = snoise(vec3(scaleFactor*vUv.x*0.02, scaleFactor*vUv.y*0.09, time*0.15));
-  float noiseSeed2 = snoise(vec3(-scaleFactor*vUv.x*0.02, scaleFactor*vUv.y*0.09 + time * 0.2, time*0.15));
-  float totalNoise = (noiseSeed2) * waveStrength;
+  //float noiseSeed2 = snoise(vec3(-scaleFactor*vUv.x*0.02, scaleFactor*vUv.y*0.09 + time * 0.2, time*0.15));
+
+  float noiseSeed2 = scaleFactor * snoise(vec3(vUv.x + time*0.2, vUv.y + time * 0.2, 0.0));
+  float noiseSeed1 = 0.0;//scaleFactor * snoise(vec3(vUv.x, vUv.y + time * 0.3, 0.0));
+
+  //vec2 noiseTexCoords = texture2D(dudvTexture, vec2(vUv.x + waterMoveFactor, vUv.y)).rg * 0.1;
+  //noiseTexCoords = vUv + vec2(noiseTexCoords.x, noiseTexCoords.y + waterMoveFactor);
+  //vec2 noise = (texture2D(dudvTexture, noiseTexCoords).rg * 2.0 - 1.0) * waveStrength;
+
+  float totalNoise = (noiseSeed2 + noiseSeed1) * waveStrength;
   return totalNoise;
 }
 
@@ -111,7 +119,18 @@ void sunLight(const vec3 surfaceNormal, const vec3 eyeDirection, float shiny,
 }
 
 void main() {
-  //float noise = calculateSimplexNoise();
+ // float noise_ = calculateSimplexNoise();
+
+
+  float noiseX = snoise(vec3(vUv.x + time*0.2, vUv.y + time * 0.2, time * 0.2));
+  float noiseY = snoise(vec3(vUv.x, vUv.y + time*0.2, 0.2));
+  float noise_ = snoise(vec3(vUv.x + time*0.2, vUv.y + time * 0.2, time * 0.2));
+//  vec2 noise = waveStrength * vec2(noiseX, noiseY);
+  vec2 noise = waveStrength * vec2(noiseX, noiseY);
+
+
+
+
 
   // // Old rippes with dudv map
   // // Values are stored as positive in the map
@@ -120,9 +139,9 @@ void main() {
   // vec2 noise = noise_1 + noise_2;
 
   // DUDV
-  vec2 noiseTexCoords = texture2D(dudvTexture, vec2(vUv.x + waterMoveFactor, vUv.y)).rg * 0.1;
-  noiseTexCoords = vUv + vec2(noiseTexCoords.x, noiseTexCoords.y + waterMoveFactor);
-  vec2 noise = (texture2D(dudvTexture, noiseTexCoords).rg * 2.0 - 1.0) * waveStrength;
+  //vec2 noiseTexCoords = texture2D(dudvTexture, vec2(vUv.x + waterMoveFactor, vUv.y)).rg * 0.1;
+  //noiseTexCoords = vUv + vec2(noiseTexCoords.x, noiseTexCoords.y + waterMoveFactor);
+  //vec2 noise = (texture2D(dudvTexture, noiseTexCoords).rg * 2.0 - 1.0) * waveStrength;
 
   vec2 ndc = posClipSpace.xy / posClipSpace.w;
   vec2 screenCoords = ndc / 2.0 + 0.5;
@@ -131,8 +150,13 @@ void main() {
 
   // // Normal map
   vec4 normalMapColor = texture2D(normalMap, noise);
-  vec3 perturbedNormal = vec3(normalMapColor.r * 2.0 - 1.0, normalMapColor.b * 4.0, normalMapColor.g * 2.0 - 1.0);
+  //vec3 perturbedNormal = vec3(normalMapColor.r * 2.0 - 1.0, normalMapColor.b * 4.0, normalMapColor.g * 2.0 - 1.0);
+  vec3 perturbedNormal = normalize(vec3(noise.x, 0.1, noise.y));
   perturbedNormal = normalize(perturbedNormal);
+
+  //perturbedNormal = vec3(0.0, 1.0, 0.0);
+  //gl_FragColor = normalMapColor;
+  //return;
 
   vec3 unitToCamera = normalize(toCamera);
   float fresnelTerm = calculateFresnel(unitToCamera, perturbedNormal);
