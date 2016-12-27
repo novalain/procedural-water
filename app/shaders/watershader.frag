@@ -129,9 +129,6 @@ void main() {
   vec2 noise = waveStrength * vec2(noiseX, noiseY);
 
 
-
-
-
   // // Old rippes with dudv map
   // // Values are stored as positive in the map
   // vec2 noise_1 = (texture2D(dudvTexture, vec2(vUv.x + waterMoveFactor, vUv.y)).rg * 2.0 - 1.0) * waveStrength;
@@ -151,7 +148,7 @@ void main() {
   // // Normal map
   vec4 normalMapColor = texture2D(normalMap, noise);
   //vec3 perturbedNormal = vec3(normalMapColor.r * 2.0 - 1.0, normalMapColor.b * 4.0, normalMapColor.g * 2.0 - 1.0);
-  vec3 perturbedNormal = normalize(vec3(noise.x, 0.1, noise.y));
+  vec3 perturbedNormal = normalize(vec3(noise.x, 0.4, noise.y));
   perturbedNormal = normalize(perturbedNormal);
 
   //perturbedNormal = vec3(0.0, 1.0, 0.0);

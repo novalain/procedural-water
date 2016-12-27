@@ -16,7 +16,7 @@ void main() {
   posClipSpace = projectionMatrix * modelViewMatrix * vec4(position,1.0);
   toCamera = cameraPositionWorld - posWorld;
   fromLight = normalize(posWorld - lightPositionWorld);
-  vUv = uv * 420.0;
+  vUv = uv * 4.2;
   //vUv = vec2(position.x / 2.0 + 0.5, position.y / 2.0 + 0.5);
   cameraPositionWorldOut = cameraPositionWorld;
   gl_Position = posClipSpace;

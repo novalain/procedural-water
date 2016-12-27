@@ -105,13 +105,23 @@ class Application {
 
   setupBottom_() {
     const textureLoader = new THREE.TextureLoader();
-    const bottomGeometry = new THREE.PlaneGeometry(500, 500, 10, 10);
+    const bottomGeometry = new THREE.PlaneGeometry(500, 500, 25, 25);
     const img = textureLoader.load('images/checkerboard.jpg');
     img.wrapS = img.wrapT = THREE.RepeatWrapping;
     img.repeat.set(3, 3);
     const bottomMaterial =
         new THREE.MeshLambertMaterial({map: img, side: THREE.BackSide, wireframe: false});
-    const bottomMesh = new THREE.Mesh(bottomGeometry, bottomMaterial);
+    this.bottomUniforms_ = {
+      textureMap : {value: img},
+    };
+    this.bottomMaterial_ = new THREE.ShaderMaterial({
+      vertexShader: this.shaders_['simplex_noise'] + this.shaders_['bottom_vert'],
+      fragmentShader:
+          this.shaders_['simplex_noise'] + this.shaders_['bottom_frag'],
+      uniforms: this.bottomUniforms_,
+      side: THREE.DoubleSide,
+    });
+    const bottomMesh = new THREE.Mesh(bottomGeometry, this.bottomMaterial_);
     bottomMesh.rotation.x = Math.PI / 2;
     bottomMesh.position.y -= 50;
     this.scene_.add(bottomMesh);
@@ -187,7 +197,7 @@ class Application {
       side: THREE.BackSide,
     });
 
-    const waterGeometry = new THREE.PlaneGeometry(25000, 25000, 1, 1);
+    const waterGeometry = new THREE.PlaneGeometry(250, 250, 1, 1);
     const waterMesh = new THREE.Mesh(waterGeometry, this.waterMaterial)
     waterMesh.rotation.x = Math.PI / 2;
 
@@ -200,7 +210,7 @@ class Application {
     this.cubeMesh = new THREE.Mesh(geometry, cubeMaterial);
     this.cubeMesh.position.y += 40;
 
-    this.setupSkybox_();
+   // this.setupSkybox_();
     //this.setupSkyDome_();
     this.setupBottom_();
 
