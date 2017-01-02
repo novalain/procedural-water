@@ -107,23 +107,26 @@ class Application {
     const textureLoader = new THREE.TextureLoader();
     const bottomGeometry = new THREE.PlaneGeometry(500, 500, 25, 25);
     const img = textureLoader.load('images/checkerboard.jpg');
+    const boximg = textureLoader.load('images/boxlol.jpg');
+    boximg.wrapS = boximg.wrapT = THREE.RepeatWrapping;
     img.wrapS = img.wrapT = THREE.RepeatWrapping;
     img.repeat.set(3, 3);
     const bottomMaterial =
         new THREE.MeshLambertMaterial({map: img, side: THREE.BackSide, wireframe: false});
     this.bottomUniforms_ = {
+      time : {value : 0},
       textureMap : {value: img},
+      myTexture: {value: boximg},
     };
     this.bottomMaterial_ = new THREE.ShaderMaterial({
       vertexShader: this.shaders_['simplex_noise'] + this.shaders_['bottom_vert'],
       fragmentShader:
           this.shaders_['simplex_noise'] + this.shaders_['bottom_frag'],
-      uniforms: this.bottomUniforms_,
-      side: THREE.DoubleSide,
+      uniforms: this.bottomUniforms_
     });
     const bottomMesh = new THREE.Mesh(bottomGeometry, this.bottomMaterial_);
-    bottomMesh.rotation.x = Math.PI / 2;
-    bottomMesh.position.y -= 50;
+    bottomMesh.rotation.x = -Math.PI / 2;
+    bottomMesh.position.y -= 1;
     this.scene_.add(bottomMesh);
   }
 
@@ -194,10 +197,10 @@ class Application {
       fragmentShader:
           this.shaders_['simplex_noise'] + this.shaders_['water_frag'],
       uniforms: this.waterUniforms,
-      side: THREE.BackSide,
+      side: THREE.BackSide
     });
 
-    const waterGeometry = new THREE.PlaneGeometry(250, 250, 1, 1);
+    const waterGeometry = new THREE.PlaneGeometry(25000, 25000, 1, 1);
     const waterMesh = new THREE.Mesh(waterGeometry, this.waterMaterial)
     waterMesh.rotation.x = Math.PI / 2;
 
@@ -210,7 +213,7 @@ class Application {
     this.cubeMesh = new THREE.Mesh(geometry, cubeMaterial);
     this.cubeMesh.position.y += 40;
 
-   // this.setupSkybox_();
+    //this.setupSkybox_();
     //this.setupSkyDome_();
     this.setupBottom_();
 
@@ -247,6 +250,7 @@ class Application {
     this.cubeMesh.rotation.x += 0.005;
     this.cubeMesh.rotation.y += 0.01;
     this.waterMaterial.uniforms.time.value += 0.05;
+    this.bottomMaterial_.uniforms.time.value += 0.05;
     this.waterMaterial.uniforms.waterMoveFactor.value += 0.05 * this.clock_.getDelta();
    // if ( this.waterMaterial.uniforms.waterMoveFactor.value >= 1.0)
      // this.waterMaterial.uniforms.waterMoveFactor.value = 0.0;

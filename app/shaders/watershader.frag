@@ -58,7 +58,7 @@ float calculateSimplexNoise() {
 }
 
 float calculateFresnel(in vec3 unitToCamera, in vec3 perturbedNormal) {
-  const float fresnelFactor = 1.75;
+  const float fresnelFactor = 0.25;
   // TODO: Replace hardcoded vec with water plane's normal
   //float fresnelTerm = dot(unitToCamera, vec3(0.0, 1.0, 0.0));
   //fresnelTerm = pow(fresnelTerm, fresnelFactor);
