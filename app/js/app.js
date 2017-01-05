@@ -15,14 +15,12 @@ class Application {
   }
 
   initGUIVars() {
-
     this.waveStrength = 0.02;
     this.scatterConst = 0.0;
     this.shineDamper = 20.0;
     this.ks = 0.6;
     this.kd = 0.1;
     this.ka = 1.0;
-
   }
 
   // TODO: Cleanup member variables
@@ -43,7 +41,7 @@ class Application {
     this.renderer_ = new THREE.WebGLRenderer({
       antialias: true,
     });
-    this.renderer_.setClearColor(0xffffff);
+    this.renderer_.setClearColor(0x000000);
     this.renderer_.setSize(this.WIDTH, this.HEIGHT);
     container.appendChild(this.renderer_.domElement);
 
@@ -131,6 +129,34 @@ class Application {
     this.scene_.add(bottomMesh);
   }
 
+  setupOBJ_() {
+    const loader = new THREE.OBJLoader();
+    const duckNabbMaterial = new THREE.MeshLambertMaterial({color: 0xff0000});
+    const duckBodyMaterial = new THREE.MeshLambertMaterial({color: 0xfffc00});
+    const duckPupilMaterial = new THREE.MeshLambertMaterial({color: 0x000000});
+    const duckEyeMaterial = new THREE.MeshLambertMaterial({color: 0xffffff});
+    loader.load('models/ducky.obj', object => {
+      this.duckHasLoaded_ = true;
+      this.duck_ = object;
+      object.traverse(function(child) {
+        console.log('child', child);
+        if (child.name === 'Ducky Body Bill') {
+          child.material = duckNabbMaterial;
+        } else if (child.name === 'Ducky Body') {
+          child.material = duckBodyMaterial;
+        } else if (child.name === 'Eye Eye1') {
+          child.material = duckEyeMaterial;
+        } else if (child.name === 'Eye Eye1 Pupil') {
+          child.material = duckPupilMaterial;
+        }
+      });
+      object.scale.x *= 0.25;
+      object.scale.y *= 0.25;
+      object.scale.z *= 0.25;
+      this.scene_.add(object);
+    });
+  }
+
   setupScene_(shaders) {
     this.scene_ = new THREE.Scene();
     this.shaders_ = shaders;
@@ -155,7 +181,7 @@ class Application {
     const sphereGeometry = new THREE.SphereGeometry(20, 32, 32);
     const sphereMaterial = new THREE.MeshLambertMaterial({color: 0xffff00});
     const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
-    this.scene_.add(sphereMesh);
+    //this.scene_.add(sphereMesh);
 
     sphereMesh.position.x += 60;
     sphereMesh.position.y += 30;
@@ -163,7 +189,7 @@ class Application {
     const torusGeometry = new THREE.TorusGeometry(15, 8, 8, 32);
     const torusMaterial = new THREE.MeshLambertMaterial({color: 'red'});
     const torusMesh = new THREE.Mesh(torusGeometry, torusMaterial);
-    this.scene_.add(torusMesh);
+   // this.scene_.add(torusMesh);
 
     torusMesh.rotation.x = -Math.PI / 4;
     torusMesh.position.x -= 60;
@@ -216,12 +242,13 @@ class Application {
 
     //this.setupSkybox_();
     //this.setupSkyDome_();
+    this.setupOBJ_();
     this.setupBottom_();
 
     /// TODO: Keep all scene objects that needs to be updated in a list
     this.scene_.add(light);
     this.scene_.add(waterMesh);
-    this.scene_.add(this.cubeMesh);
+   // this.scene_.add(this.cubeMesh);
   }
 
   updateMirrorCamera_() {
@@ -270,6 +297,26 @@ class Application {
   loop() {
     this.stats_.begin();
     this.controls_.update();
+
+    if (this.duckHasLoaded_) {
+      const time = this.clock_.getElapsedTime();
+      this.duck_.position.x = 200.0 * Math.cos(0.2*time);
+      this.duck_.position.z = 200.0 * Math.sin(0.2*time);
+
+      // Calculate tangent vector
+      const radiusVec = this.duck_.position;
+      const rotation = new THREE.Vector3();
+      rotation.crossVectors(radiusVec, new THREE.Vector3(0.0, 1.0, 0.0));
+      rotation.normalize();
+
+      const dot = rotation.dot(new THREE.Vector3(0.0, 0.0, 1.0));
+      let amount = Math.acos(dot);
+
+      if (this.duck_.position.z > 0.0) {
+        amount *= -1;
+      }
+      this.duck_.rotation.set(0.1 * Math.sin(time*2.0), amount, 0.3 * Math.sin(time*5.0));
+    }
 
     this.updateScene_();
     this.updateUniforms_();
