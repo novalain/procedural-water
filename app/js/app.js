@@ -16,7 +16,7 @@ class Application {
 
   initGUIVars() {
     this.waveStrength = 0.02;
-    this.scatterConst = 0.0;
+    //this.scatterConst = 0.0;
     this.shineDamper = 20.0;
     this.ks = 0.6;
     this.kd = 0.1;
@@ -101,32 +101,30 @@ class Application {
     this.scene_.add(sky);
   }
 
-  setupBottom_() {
+  setupTerrain_() {
     const textureLoader = new THREE.TextureLoader();
-    const bottomGeometry = new THREE.PlaneGeometry(1000, 1000, 25, 25);
-    const img = textureLoader.load('images/checkerboard.jpg');
+    const terrainGeometry = new THREE.PlaneGeometry(1000, 1000, 25, 25);
+    //const img = textureLoader.load('images/checkerboard.jpg');
    // const boximg = textureLoader.load('images/boxlol.jpg');
     //boximg.wrapS = boximg.wrapT = THREE.RepeatWrapping;
-    img.wrapS = img.wrapT = THREE.RepeatWrapping;
-    img.repeat.set(3, 3);
-    const bottomMaterial =
-        new THREE.MeshLambertMaterial({map: img, side: THREE.BackSide, wireframe: true});
-    this.bottomUniforms_ = {
-      time : {value : 0},
-      textureMap : {value: img},
+    //img.wrapS = img.wrapT = THREE.RepeatWrapping;
+    //img.repeat.set(3, 3);
+    //this.terrainUniforms_ = {
+     // time : {value : 0},
+      //textureMap : {value: img},
     //  myTexture: {value: boximg},
-    };
-    this.bottomMaterial_ = new THREE.ShaderMaterial({
-      vertexShader: this.shaders_['simplex_noise'] + this.shaders_['bottom_vert'],
+    //};
+    this.terrainMaterial_ = new THREE.ShaderMaterial({
+      vertexShader: this.shaders_['simplex_noise'] + this.shaders_['terrain_vert'],
       fragmentShader:
-          this.shaders_['simplex_noise'] + this.shaders_['bottom_frag'],
-      uniforms: this.bottomUniforms_,
+          this.shaders_['simplex_noise'] + this.shaders_['terrain_frag'],
+      //uniforms: this.terrainUniforms_,
       //wireframe:true,
     });
-    const bottomMesh = new THREE.Mesh(bottomGeometry, this.bottomMaterial_);
-    bottomMesh.rotation.x = -Math.PI / 2;
-    bottomMesh.position.y += 100;
-    this.scene_.add(bottomMesh);
+    const terrainMesh = new THREE.Mesh(terrainGeometry, this.terrainMaterial_);
+    terrainMesh.rotation.x = -Math.PI / 2;
+    terrainMesh.position.y += 100;
+    this.scene_.add(terrainMesh);
   }
 
   setupOBJ_() {
@@ -167,9 +165,6 @@ class Application {
         window.innerWidth, window.innerHeight,
         {minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
 
-  //  const light = new THREE.DirectionalLight(0xffffff);
-   // light.position.set(0, 1, 1).normalize();
-
     var light = new THREE.DirectionalLight(0xffffff);
     light.position.set(-600, 300, 600);
 
@@ -200,7 +195,7 @@ class Application {
       waterMoveFactor: {value: 0.0},
       waveStrength: {value: this.waveStrength},
       waterColor: {value: new THREE.Vector3(0.0, 0.3, 0.5, 0.9)},
-      scatterConst: {value: this.scatterConst},
+     //scatterConst: {value: this.scatterConst},
       reflectionTexture: {value: this.reflectionRenderTarget.texture},
       refractionTexture: {value: this.refractionRenderTarget.texture},
       shineDamper: {value: this.shineDamper},
@@ -243,7 +238,7 @@ class Application {
     //this.setupSkybox_();
     //this.setupSkyDome_();
     this.setupOBJ_();
-    this.setupBottom_();
+    this.setupTerrain_();
 
     /// TODO: Keep all scene objects that needs to be updated in a list
     this.scene_.add(light);
@@ -278,7 +273,7 @@ class Application {
     this.cubeMesh.rotation.x += 0.005;
     this.cubeMesh.rotation.y += 0.01;
     this.waterMaterial.uniforms.time.value += 0.05;
-    this.bottomMaterial_.uniforms.time.value += 0.05;
+    //value += 0.05;
     this.waterMaterial.uniforms.waterMoveFactor.value += 0.05 * this.clock_.getDelta();
    // if ( this.waterMaterial.uniforms.waterMoveFactor.value >= 1.0)
      // this.waterMaterial.uniforms.waterMoveFactor.value = 0.0;
@@ -287,7 +282,7 @@ class Application {
 
   updateUniforms_() {
     this.waterMaterial.uniforms.waveStrength.value = this.waveStrength;
-    this.waterMaterial.uniforms.scatterConst.value = this.scatterConst;
+    //this.waterMaterial.uniforms.scatterConst.value = this.scatterConst;
     this.waterMaterial.uniforms.shineDamper.value = this.shineDamper;
     this.waterMaterial.uniforms.ks.value = this.ks;
     this.waterMaterial.uniforms.kd.value = this.kd;

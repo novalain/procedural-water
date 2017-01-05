@@ -170,8 +170,8 @@ void main() {
   sunLight(perturbedNormal, unitToCamera, shineDamper, ks, kd, diffuseColor, specularColor);
 
   // Scatter
-  vec3 scatter_tmp = max(0.0, dot(perturbedNormal, unitToCamera)) * vec3(0.0, 0.1, 0.07);
-  vec4 scatter = vec4(scatter_tmp, 1.0) * scatterConst;
+  //vec3 scatter_tmp = max(0.0, dot(perturbedNormal, unitToCamera)) * vec3(0.0, 0.1, 0.07);
+  //vec4 scatter = vec4(scatter_tmp, 1.0) * scatterConst;
 
   //vec3 color = vec3(0.3, 0.5, 0.9);
 
@@ -182,7 +182,7 @@ void main() {
   // vec3 refractionColor = mix(vec3(refractionSample)*0.5, vec3(color), absorbtion);
 
   // Schlicks
-  gl_FragColor = mix(refractionSample + scatter,
+  gl_FragColor = mix(refractionSample,
                      texture2D(reflectionTexture, reflectionCoords + noise), fresnelTerm);
 
   // Normal
