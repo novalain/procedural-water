@@ -23,13 +23,9 @@ varying vec3 fromLight;
 varying vec3 worldPosition;
 varying vec3 cameraPositionWorldOut;
 
-
 //const vec3 waterColor = vec3(0.3, 0.5, 0.9);
-//const float waveStrength = 0.02;
 
 // Lightning
-
-
 // Phong specular term => Ks * (R dot V)^n
 // vec3 calculateSpecularHighlights(in float totalNoise, in vec3 unitToCamera) {
 //   vec3 perturbedNormal = normalize(vec3(totalNoise, 0.002, totalNoise));
@@ -60,9 +56,11 @@ float calculateSimplexNoise() {
 float calculateFresnel(in vec3 unitToCamera, in vec3 perturbedNormal) {
   const float fresnelFactor = 0.25;
   // TODO: Replace hardcoded vec with water plane's normal
-  //float fresnelTerm = dot(unitToCamera, vec3(0.0, 1.0, 0.0));
+ // float fresnelTerm = dot(unitToCamera, vec3(0.0, 1.0, 0.0));
   //fresnelTerm = pow(fresnelTerm, fresnelFactor);
   // Shlicks approximation
+
+
   float theta1 = max(dot(unitToCamera, perturbedNormal), 0.0);
   float rf0 = 0.02;
   float fresnelTerm = rf0 + (1.0 - rf0)*pow((1.0 - theta1), 5.0);
@@ -183,10 +181,15 @@ void main() {
   // vec3 absorbtion = min((waterDepth/35.0)*vec3(2.0, 1.05, 1.0), vec3(1.0));
   // vec3 refractionColor = mix(vec3(refractionSample)*0.5, vec3(color), absorbtion);
 
+  // Schlicks
   gl_FragColor = mix(refractionSample + scatter,
                      texture2D(reflectionTexture, reflectionCoords + noise), fresnelTerm);
 
-  vec4 waterColorFinal = mix(gl_FragColor, waterColor, 0.3);
+  // Normal
+ // gl_FragColor = mix(texture2D(reflectionTexture, reflectionCoords + noise),
+   //                 refractionSample + scatter, fresnelTerm);
+
+  vec4 waterColorFinal = mix(gl_FragColor, waterColor, 0.2);
   gl_FragColor = waterColorFinal * ka + waterColorFinal * vec4(diffuseColor, 1.0) + vec4(vec3(1.0, 1.0, 1.0), 1.0) * vec4(specularColor, 1.0);
 
 

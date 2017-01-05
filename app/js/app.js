@@ -17,7 +17,7 @@ class Application {
   initGUIVars() {
 
     this.waveStrength = 0.02;
-    this.scatterConst = 2.0;
+    this.scatterConst = 0.0;
     this.shineDamper = 20.0;
     this.ks = 0.6;
     this.kd = 0.1;
@@ -105,28 +105,29 @@ class Application {
 
   setupBottom_() {
     const textureLoader = new THREE.TextureLoader();
-    const bottomGeometry = new THREE.PlaneGeometry(500, 500, 25, 25);
+    const bottomGeometry = new THREE.PlaneGeometry(1000, 1000, 25, 25);
     const img = textureLoader.load('images/checkerboard.jpg');
-    const boximg = textureLoader.load('images/boxlol.jpg');
-    boximg.wrapS = boximg.wrapT = THREE.RepeatWrapping;
+   // const boximg = textureLoader.load('images/boxlol.jpg');
+    //boximg.wrapS = boximg.wrapT = THREE.RepeatWrapping;
     img.wrapS = img.wrapT = THREE.RepeatWrapping;
     img.repeat.set(3, 3);
     const bottomMaterial =
-        new THREE.MeshLambertMaterial({map: img, side: THREE.BackSide, wireframe: false});
+        new THREE.MeshLambertMaterial({map: img, side: THREE.BackSide, wireframe: true});
     this.bottomUniforms_ = {
       time : {value : 0},
       textureMap : {value: img},
-      myTexture: {value: boximg},
+    //  myTexture: {value: boximg},
     };
     this.bottomMaterial_ = new THREE.ShaderMaterial({
       vertexShader: this.shaders_['simplex_noise'] + this.shaders_['bottom_vert'],
       fragmentShader:
           this.shaders_['simplex_noise'] + this.shaders_['bottom_frag'],
-      uniforms: this.bottomUniforms_
+      uniforms: this.bottomUniforms_,
+      //wireframe:true,
     });
     const bottomMesh = new THREE.Mesh(bottomGeometry, this.bottomMaterial_);
     bottomMesh.rotation.x = -Math.PI / 2;
-    bottomMesh.position.y -= 1;
+    bottomMesh.position.y += 100;
     this.scene_.add(bottomMesh);
   }
 
@@ -200,7 +201,7 @@ class Application {
       side: THREE.BackSide
     });
 
-    const waterGeometry = new THREE.PlaneGeometry(25000, 25000, 1, 1);
+    const waterGeometry = new THREE.PlaneGeometry(600, 600, 1, 1);
     const waterMesh = new THREE.Mesh(waterGeometry, this.waterMaterial)
     waterMesh.rotation.x = Math.PI / 2;
 
@@ -271,7 +272,6 @@ class Application {
     this.controls_.update();
 
     this.updateScene_();
-
     this.updateUniforms_();
     this.updateMirrorCamera_();
     // Remove buffer texture from scene when it is rendered to
