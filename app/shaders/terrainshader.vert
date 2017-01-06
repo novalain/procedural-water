@@ -18,6 +18,7 @@ void main() {
             exp(-((pow((tmp_pos.x - 0.0), 2.0) / (2.0 * pow(180.0 + nStrengthTerrain2*noise, 2.0)) ) +
             (pow((tmp_pos.z - 0.0), 2.0) / (2.0 * pow(180.0 + nStrengthTerrain2*noise, 2.0)))));
 
+  // Center hill
   tmp_pos.y += -10.0 + 200.0*
             exp(-((pow((tmp_pos.x - 0.0), 2.0) / (2.0 * pow(100.0 + 0.0*noise , 2.0)) ) +
             (pow((tmp_pos.z - 0.0), 2.0) / (2.0 * pow(100.0 + 0.0*noise , 2.0)))));

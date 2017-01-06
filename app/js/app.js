@@ -132,21 +132,10 @@ class Application {
       ks: {value: this.ks},
       kd: {value: this.kd},
       ka: {value: this.ka},
-      dudvTexture: {value: this.textureLoader_.load('images/waterDUDV.png')},
-      normalMap: {value: this.textureLoader_.load('images/waterNormalMap.png')},
-      normalMap2:
-          {value: this.textureLoader_.load('images/waterNormalMap2.jpg')},
       // For Fresnel
       cameraPositionWorld: {value: this.camera_.position},
       lightPositionWorld: {value: light.position},
     };
-
-    waterUniforms.dudvTexture.value.wrapS =
-        waterUniforms.dudvTexture.value.wrapT = THREE.RepeatWrapping;
-    waterUniforms.normalMap.value.wrapS = waterUniforms.normalMap.value.wrapT =
-        THREE.RepeatWrapping;
-    waterUniforms.normalMap2.value.wrapS =
-        waterUniforms.normalMap2.value.wrapT = THREE.RepeatWrapping;
 
     this.waterMaterial = new THREE.ShaderMaterial({
       vertexShader: shaders['water_vert'],
