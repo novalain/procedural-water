@@ -32,7 +32,7 @@ class Application {
     this.clock_ = new THREE.Clock();
     this.camera_ =
         new THREE.PerspectiveCamera(60, this.WIDTH / this.HEIGHT, 1, 200000);
-    this.camera_.position.set(0, 300, 500);
+    this.camera_.position.set(0, 600, 1000);
     this.camera_.lookAt(new THREE.Vector3(0, 0, 0));
 
     this.reflectionPlane_ = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
