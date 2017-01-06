@@ -173,13 +173,13 @@ class Application {
       geometry.faces[i].color.setHex(Math.random() * 0xffffff);
     }
 
-    const sphereGeometry = new THREE.SphereGeometry(20, 32, 32);
-    const sphereMaterial = new THREE.MeshLambertMaterial({color: 0xffff00});
+    const sphereGeometry = new THREE.SphereGeometry(50, 32, 32);
+    const sphereMaterial = new THREE.MeshLambertMaterial({color: 0xeb0000});
     const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
-    //this.scene_.add(sphereMesh);
+    this.scene_.add(sphereMesh);
 
-    sphereMesh.position.x += 60;
-    sphereMesh.position.y += 30;
+    //sphereMesh.position.x += 60;
+    sphereMesh.position.y += 80;
 
     const torusGeometry = new THREE.TorusGeometry(15, 8, 8, 32);
     const torusMaterial = new THREE.MeshLambertMaterial({color: 'red'});
@@ -222,7 +222,7 @@ class Application {
       side: THREE.BackSide
     });
 
-    const waterGeometry = new THREE.PlaneGeometry(600, 600, 1, 1);
+    const waterGeometry = new THREE.PlaneGeometry(700, 700, 1, 1);
     const waterMesh = new THREE.Mesh(waterGeometry, this.waterMaterial)
     waterMesh.rotation.x = Math.PI / 2;
 
