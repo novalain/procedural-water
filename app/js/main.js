@@ -26,6 +26,8 @@ window.onload = () => {
     gui.add(app, 'kd', 0.0, 1.0);
     gui.add(app, 'ka', 0.0, 1.0);
     gui.add(app, 'nSeedTerrain', 1.0, 5.0);
+    gui.add(app, 'nStrengthTerrain1', 1.0, 500.0);
+    gui.add(app, 'nStrengthTerrain2', 1.0, 500.0);
     app.loop();
   });
 }

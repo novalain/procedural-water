@@ -17,17 +17,18 @@ class Application {
   initGUIVars() {
     this.waveStrength = 0.02;
     this.nSeedTerrain = 1.0;
-    //this.scatterConst = 0.0;
+    this.nStrengthTerrain1 = 20.0;
+    this.nStrengthTerrain2 = 50.0;
     this.shineDamper = 20.0;
     this.ks = 0.6;
     this.kd = 0.1;
     this.ka = 1.0;
   }
 
-  // TODO: Cleanup member variables
   initThreeJs_(container) {
     this.WIDTH = window.innerWidth;
     this.HEIGHT = window.innerHeight;
+    this.textureLoader_ = new THREE.TextureLoader();
     this.clock_ = new THREE.Clock();
     this.camera_ =
         new THREE.PerspectiveCamera(60, this.WIDTH / this.HEIGHT, 1, 200000);
@@ -36,18 +37,20 @@ class Application {
 
     this.reflectionPlane_ = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     this.refractionPlane_ = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
-    // TODO: How to remove clipping plane from Three.JS without lag?
+    // TODO: How to remove clipping plane without lag?
     this.dummyPlane_ = new THREE.Plane(new THREE.Vector3(0, 1, 0), 200000);
 
     this.renderer_ = new THREE.WebGLRenderer({
-      antialias: true,
+      antialias: false,
     });
+
     this.renderer_.setClearColor(0x000000);
     this.renderer_.setSize(this.WIDTH, this.HEIGHT);
     container.appendChild(this.renderer_.domElement);
 
-    this.controls_ = new THREE.OrbitControls(this.camera_, this.renderer_.domElement);
-    this.controls_.minDistance = 10;
+    const rendererDomElement = this.renderer_.domElement;
+    this.controls_ = new THREE.OrbitControls(this.camera_, rendererDomElement);
+    this.controls_.minDistance = 200;
     this.controls_.maxDistance = 1000;
     this.controls_.update();
     //this.controls_.zoomSpeed = 10.0
@@ -63,60 +66,17 @@ class Application {
     this.camera_.updateProjectionMatrix();
   }
 
-  setupSkybox_() {
-    const textureLoader = new THREE.TextureLoader();
-    const urls = [
-      'images/dawnmountain-xpos.png', 'images/dawnmountain-xneg.png',
-      'images/dawnmountain-ypos.png', 'images/dawnmountain-yneg.png',
-      'images/dawnmountain-zpos.png', 'images/dawnmountain-zneg.png'
-    ];
-    const materialArray = urls.map(
-        url => new THREE.MeshBasicMaterial(
-            {map: textureLoader.load(url), side: THREE.BackSide}));
-    const skyboxMaterial = new THREE.MeshFaceMaterial(materialArray);
-    const skyboxGeom = new THREE.CubeGeometry(20000, 20000, 20000, 1, 1, 1);
-    const skybox = new THREE.Mesh(skyboxGeom, skyboxMaterial);
-    this.scene_.add(skybox);
-  }
-
-  setupSkyDome_() {
-    const textureLoader = new THREE.TextureLoader();
-    const skyGeo = new THREE.SphereGeometry(15000, 25, 25);
-
-    //skyGeo.scale.set(-1, 1, 1);
-    //skyGeo.eulerOrder = 'XZY';
-    //skyGeo.renderDepth = 1000.0;
-
-
-
-    const texture = textureLoader.load("images/warped.jpg");
-    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-    const material = new THREE.MeshBasicMaterial({
-      map: texture, side:THREE.BackSide,
-    });
-    const sky = new THREE.Mesh(skyGeo, material);
-
-    //sky.scale.set(1, -1, 1);
-    //sky.eulerOrder = 'ZYX';
-
-    this.scene_.add(sky);
-  }
-
-  setupTerrain_() {
-    const textureLoader = new THREE.TextureLoader();
+  setupTerrain_(shaders) {
     const terrainGeometry = new THREE.PlaneGeometry(1000, 1000, 25, 25);
-    //const img = textureLoader.load('images/checkerboard.jpg');
-   // const boximg = textureLoader.load('images/boxlol.jpg');
-    //boximg.wrapS = boximg.wrapT = THREE.RepeatWrapping;
-    //img.wrapS = img.wrapT = THREE.RepeatWrapping;
-    //img.repeat.set(3, 3);
     this.terrainUniforms_ = {
-      nSeedTerrain : {value : 1.0},
+      nSeedTerrain : {value : this.nSeedTerrain},
+      nStrengthTerrain1: {value: this.nStrengthTerrain1},
+      nStrengthTerrain2: {value: this.nStrengthTerrain2},
     };
     this.terrainMaterial = new THREE.ShaderMaterial({
-      vertexShader: this.shaders_['simplex_noise'] + this.shaders_['terrain_vert'],
+      vertexShader: shaders['simplex_noise'] + shaders['terrain_vert'],
       fragmentShader:
-          this.shaders_['simplex_noise'] + this.shaders_['terrain_frag'],
+          shaders['simplex_noise'] + shaders['terrain_frag'],
       uniforms: this.terrainUniforms_,
       //wireframe:true,
     });
@@ -135,28 +95,75 @@ class Application {
     loader.load('models/ducky.obj', object => {
       this.duckHasLoaded_ = true;
       this.duck_ = object;
-      object.traverse(function(child) {
-        console.log('child', child);
-        if (child.name === 'Ducky Body Bill') {
-          child.material = duckNabbMaterial;
-        } else if (child.name === 'Ducky Body') {
-          child.material = duckBodyMaterial;
-        } else if (child.name === 'Eye Eye1') {
-          child.material = duckEyeMaterial;
-        } else if (child.name === 'Eye Eye1 Pupil') {
-          child.material = duckPupilMaterial;
+      object.traverse(child => {
+        switch (child.name) {
+          case 'Ducky Body Bill':
+            child.material = duckNabbMaterial;
+            break;
+          case 'Ducky Body':
+            child.material = duckBodyMaterial;
+            break;
+          case 'Eye Eye1':
+            child.material = duckEyeMaterial;
+            break;
+          case 'Eye Eye1 Pupil':
+            child.material = duckPupilMaterial;
+            break;
         }
       });
-      object.scale.x *= 0.25;
-      object.scale.y *= 0.25;
-      object.scale.z *= 0.25;
+      const duckScaleFactor = 0.25;
+      object.scale.set(
+          object.scale.x * duckScaleFactor, object.scale.y * duckScaleFactor,
+          object.scale.z * duckScaleFactor);
       this.scene_.add(object);
     });
   }
 
+  setupWater_(light, shaders) {
+    const waterUniforms = {
+      time: {value: 0},
+      waterMoveFactor: {value: 0.0},
+      waveStrength: {value: this.waveStrength},
+      waterColor: {value: new THREE.Vector3(0.0, 0.3, 0.5, 0.9)},
+      // scatterConst: {value: this.scatterConst},
+      reflectionTexture: {value: this.reflectionRenderTarget.texture},
+      refractionTexture: {value: this.refractionRenderTarget.texture},
+      shineDamper: {value: this.shineDamper},
+      ks: {value: this.ks},
+      kd: {value: this.kd},
+      ka: {value: this.ka},
+      dudvTexture: {value: this.textureLoader_.load('images/waterDUDV.png')},
+      normalMap: {value: this.textureLoader_.load('images/waterNormalMap.png')},
+      normalMap2:
+          {value: this.textureLoader_.load('images/waterNormalMap2.jpg')},
+      // For Fresnel
+      cameraPositionWorld: {value: this.camera_.position},
+      lightPositionWorld: {value: light.position},
+    };
+
+    waterUniforms.dudvTexture.value.wrapS =
+        waterUniforms.dudvTexture.value.wrapT = THREE.RepeatWrapping;
+    waterUniforms.normalMap.value.wrapS = waterUniforms.normalMap.value.wrapT =
+        THREE.RepeatWrapping;
+    waterUniforms.normalMap2.value.wrapS =
+        waterUniforms.normalMap2.value.wrapT = THREE.RepeatWrapping;
+
+    this.waterMaterial = new THREE.ShaderMaterial({
+      vertexShader: shaders['water_vert'],
+      fragmentShader:
+          shaders['simplex_noise'] + shaders['water_frag'],
+      uniforms: waterUniforms,
+      side: THREE.BackSide
+    });
+
+    const waterGeometry = new THREE.PlaneGeometry(700, 700, 1, 1);
+    const waterMesh = new THREE.Mesh(waterGeometry, this.waterMaterial)
+    waterMesh.rotation.x = Math.PI / 2;
+    this.scene_.add(waterMesh);
+  }
+
   setupScene_(shaders) {
     this.scene_ = new THREE.Scene();
-    this.shaders_ = shaders;
     this.reflectionRenderTarget = new THREE.WebGLRenderTarget(
         window.innerWidth, window.innerHeight,
         {minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
@@ -164,66 +171,13 @@ class Application {
         window.innerWidth, window.innerHeight,
         {minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
 
-    var light = new THREE.DirectionalLight(0xffffff);
+    const light = new THREE.DirectionalLight(0xffffff);
     light.position.set(-600, 300, 600);
-
-    const geometry = new THREE.BoxGeometry(30, 30, 30);
-    for (var i = 0; i < geometry.faces.length; i++) {
-      geometry.faces[i].color.setHex(Math.random() * 0xffffff);
-    }
 
     const sphereGeometry = new THREE.SphereGeometry(50, 32, 32);
     const sphereMaterial = new THREE.MeshLambertMaterial({color: 0xeb0000});
     const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
-    this.scene_.add(sphereMesh);
-
-    //sphereMesh.position.x += 60;
     sphereMesh.position.y += 80;
-
-    const torusGeometry = new THREE.TorusGeometry(15, 8, 8, 32);
-    const torusMaterial = new THREE.MeshLambertMaterial({color: 'red'});
-    const torusMesh = new THREE.Mesh(torusGeometry, torusMaterial);
-   // this.scene_.add(torusMesh);
-
-    torusMesh.rotation.x = -Math.PI / 4;
-    torusMesh.position.x -= 60;
-    torusMesh.position.y += 30;
-
-    this.waterUniforms = {
-      time: {value: 0},
-      waterMoveFactor: {value: 0.0},
-      waveStrength: {value: this.waveStrength},
-      waterColor: {value: new THREE.Vector3(0.0, 0.3, 0.5, 0.9)},
-     //scatterConst: {value: this.scatterConst},
-      reflectionTexture: {value: this.reflectionRenderTarget.texture},
-      refractionTexture: {value: this.refractionRenderTarget.texture},
-      shineDamper: {value: this.shineDamper},
-      ks: {value: this.ks},
-      kd: {value: this.kd},
-      ka: {value: this.ka},
-      dudvTexture: {value: THREE.ImageUtils.loadTexture('images/waterDUDV.png')},
-      normalMap: {value: THREE.ImageUtils.loadTexture('images/waterNormalMap.png')},
-      normalMap2: {value: THREE.ImageUtils.loadTexture('images/waterNormalMap2.jpg')},
-      // For Fresnel
-      cameraPositionWorld: {value: this.camera_.position},
-      lightPositionWorld: {value: light.position},
-    };
-
-    this.waterUniforms.dudvTexture.value.wrapS = this.waterUniforms.dudvTexture.value.wrapT = THREE.RepeatWrapping;
-    this.waterUniforms.normalMap.value.wrapS = this.waterUniforms.normalMap.value.wrapT = THREE.RepeatWrapping;
-    this.waterUniforms.normalMap2.value.wrapS = this.waterUniforms.normalMap2.value.wrapT = THREE.RepeatWrapping;
-
-    this.waterMaterial = new THREE.ShaderMaterial({
-      vertexShader: this.shaders_['water_vert'],
-      fragmentShader:
-          this.shaders_['simplex_noise'] + this.shaders_['water_frag'],
-      uniforms: this.waterUniforms,
-      side: THREE.BackSide
-    });
-
-    const waterGeometry = new THREE.PlaneGeometry(700, 700, 1, 1);
-    const waterMesh = new THREE.Mesh(waterGeometry, this.waterMaterial)
-    waterMesh.rotation.x = Math.PI / 2;
 
     const cubeMaterial = new THREE.MeshPhongMaterial({
       color: 0xffffff,
@@ -231,35 +185,31 @@ class Application {
       shininess: 30,
       vertexColors: THREE.FaceColors,
     });
-    this.cubeMesh = new THREE.Mesh(geometry, cubeMaterial);
-    this.cubeMesh.position.y += 40;
 
-    //this.setupSkybox_();
-    //this.setupSkyDome_();
+    this.setupWater_(light, shaders);
+    this.setupTerrain_(shaders);
     this.setupOBJ_();
-    this.setupTerrain_();
 
-    /// TODO: Keep all scene objects that needs to be updated in a list
     this.scene_.add(light);
-    this.scene_.add(waterMesh);
-   // this.scene_.add(this.cubeMesh);
+    this.scene_.add(sphereMesh);
   }
 
   updateMirrorCamera_() {
-    this.mirrorCamera_ = this.camera_.clone();
+    const mirrorCamera = this.camera_.clone();
     const cameraUp =
         new THREE.Vector3(0, 1, 0).applyQuaternion(this.camera_.quaternion);
-    this.mirrorCamera_.up.set(cameraUp.x, -cameraUp.y, cameraUp.z);
-    this.mirrorCamera_.position.set(
+    mirrorCamera.up.set(cameraUp.x, -cameraUp.y, cameraUp.z);
+    mirrorCamera.position.set(
         this.camera_.position.x, -this.camera_.position.y,
         this.camera_.position.z);
-    this.mirrorCamera_.lookAt(this.camera_.getWorldDirection());
+    mirrorCamera.lookAt(this.camera_.getWorldDirection());
+    return mirrorCamera;
   }
 
-  renderToMirrorTexture_() {
+  renderToMirrorTexture_(mirrorCamera) {
     this.renderer_.clippingPlanes = [this.reflectionPlane_];
     this.renderer_.render(
-        this.scene_, this.mirrorCamera_, this.reflectionRenderTarget);
+        this.scene_, mirrorCamera, this.reflectionRenderTarget);
   }
 
   renderToRefractionTexture_() {
@@ -268,35 +218,24 @@ class Application {
         this.scene_, this.camera_, this.refractionRenderTarget);
   }
 
-  updateScene_() {
-    this.cubeMesh.rotation.x += 0.005;
-    this.cubeMesh.rotation.y += 0.01;
-    this.waterMaterial.uniforms.time.value += 0.05;
-    //value += 0.05;
-    this.waterMaterial.uniforms.waterMoveFactor.value += 0.05 * this.clock_.getDelta();
-   // if ( this.waterMaterial.uniforms.waterMoveFactor.value >= 1.0)
-     // this.waterMaterial.uniforms.waterMoveFactor.value = 0.0;
-    this.waterMaterial.uniforms.waterMoveFactor.value %= 1.0;
-  }
-
   updateUniforms_() {
-    this.waterMaterial.uniforms.waveStrength.value = this.waveStrength;
-    this.terrainMaterial.uniforms.nSeedTerrain.value = this.nSeedTerrain;
-    //this.waterMaterial.uniforms.scatterConst.value = this.scatterConst;
-    this.waterMaterial.uniforms.shineDamper.value = this.shineDamper;
-    this.waterMaterial.uniforms.ks.value = this.ks;
-    this.waterMaterial.uniforms.kd.value = this.kd;
-    this.waterMaterial.uniforms.ka.value = this.ka;
+    const waterUniforms = this.waterMaterial.uniforms;
+    waterUniforms.waveStrength.value = this.waveStrength;
+    waterUniforms.shineDamper.value = this.shineDamper;
+    waterUniforms.ks.value = this.ks;
+    waterUniforms.kd.value = this.kd;
+    waterUniforms.ka.value = this.ka;
+    // Terrain
+    const terrainUniforms = this.terrainMaterial.uniforms;
+    terrainUniforms.nSeedTerrain.value = this.nSeedTerrain;
+    terrainUniforms.nStrengthTerrain1.value = this.nStrengthTerrain1;
+    terrainUniforms.nStrengthTerrain2.value = this.nStrengthTerrain2;
   }
 
-  loop() {
-    this.stats_.begin();
-    this.controls_.update();
-
+  updateDuck_(time) {
     if (this.duckHasLoaded_) {
-      const time = this.clock_.getElapsedTime();
-      this.duck_.position.x = 200.0 * Math.cos(0.2*time);
-      this.duck_.position.z = 200.0 * Math.sin(0.2*time);
+      this.duck_.position.x = 200.0 * Math.cos(0.2 * time);
+      this.duck_.position.z = 200.0 * Math.sin(0.2 * time);
 
       // Calculate tangent vector
       const radiusVec = this.duck_.position;
@@ -310,18 +249,32 @@ class Application {
       if (this.duck_.position.z > 0.0) {
         amount *= -1;
       }
-      this.duck_.rotation.set(0.1 * Math.sin(time*2.0), amount, 0.3 * Math.sin(time*5.0));
+      this.duck_.rotation.set(
+          0.1 * Math.sin(time * 2.0), amount, 0.3 * Math.sin(time * 5.0));
     }
+  }
 
-    this.updateScene_();
+  loop() {
+    this.stats_.begin();
+    this.controls_.update();
+
+    // Update stuff
+    const time = this.clock_.getElapsedTime();
+    this.waterMaterial.uniforms.time.value = 5.0 * time; // += 0.05;
+    this.updateDuck_(time);
     this.updateUniforms_();
-    this.updateMirrorCamera_();
+    const mirrorCamera = this.updateMirrorCamera_();
+
+    // Render to mirror and refraction texture
     // Remove buffer texture from scene when it is rendered to
     this.waterMaterial.visible = false;
-    this.renderToMirrorTexture_();
+    this.renderToMirrorTexture_(mirrorCamera);
     this.renderToRefractionTexture_();
     this.waterMaterial.visible = true;
+    // TODO: Setting clippingplanes to [] results in HUGE fps drop
     this.renderer_.clippingPlanes = [this.dummyPlane_];
+
+    // Finally render scene
     this.renderer_.render(this.scene_, this.camera_);
     requestAnimationFrame(this.loop.bind(this));
     this.stats_.end();

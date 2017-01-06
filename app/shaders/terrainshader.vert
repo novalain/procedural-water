@@ -1,4 +1,6 @@
 uniform float nSeedTerrain;
+uniform float nStrengthTerrain1;
+uniform float nStrengthTerrain2;
 
 varying float elevation;
 varying vec2 vUv;
@@ -12,9 +14,9 @@ void main() {
                 0.075 * snoise(vec3(0.2*position.x, 0.2* position.y, nSeedTerrain));
 
   // Gauss 2D function
-  tmp_pos.y = 50.0 + 20.0 * noise + -200.0*
-            exp(-((pow((tmp_pos.x - 0.0), 2.0) / (2.0 * pow(180.0 + 0.0*noise, 2.0)) ) +
-            (pow((tmp_pos.z - 0.0), 2.0) / (2.0 * pow(180.0 + 100.0*noise, 2.0)))));
+  tmp_pos.y = 50.0 + nStrengthTerrain1 * noise + -200.0*
+            exp(-((pow((tmp_pos.x - 0.0), 2.0) / (2.0 * pow(180.0 + nStrengthTerrain2*noise, 2.0)) ) +
+            (pow((tmp_pos.z - 0.0), 2.0) / (2.0 * pow(180.0 + nStrengthTerrain2*noise, 2.0)))));
 
   tmp_pos.y += -10.0 + 200.0*
             exp(-((pow((tmp_pos.x - 0.0), 2.0) / (2.0 * pow(100.0 + 0.0*noise , 2.0)) ) +
