@@ -16,13 +16,13 @@ class Application {
 
   initGUIVars() {
     this.waveStrength = 0.02;
-    this.nSeedTerrain = 1.0;
-    this.nStrengthTerrain1 = 20.0;
-    this.nStrengthTerrain2 = 50.0;
+    this.nSeedTerrain = 3.0;
+    this.nStrengthTerrain1 = 59.0;
+    this.nStrengthTerrain2 = 156.0;
     this.shineDamper = 20.0;
-    this.ks = 0.6;
-    this.kd = 0.1;
-    this.ka = 1.0;
+    this.ks = 0.15;
+    this.kd = 1.0;
+    this.ka = 0.6;
   }
 
   initThreeJs_(container) {
@@ -51,7 +51,7 @@ class Application {
     const rendererDomElement = this.renderer_.domElement;
     this.controls_ = new THREE.OrbitControls(this.camera_, rendererDomElement);
     this.controls_.minDistance = 200;
-    this.controls_.maxDistance = 1000;
+    this.controls_.maxDistance = 2000;
     this.controls_.update();
     //this.controls_.zoomSpeed = 10.0
   }
@@ -66,22 +66,30 @@ class Application {
     this.camera_.updateProjectionMatrix();
   }
 
-  setupTerrain_(shaders) {
+  setupTerrain_(light, shaders) {
+    console.log("light", light);
     const terrainGeometry = new THREE.PlaneGeometry(1000, 1000, 25, 25);
-    this.terrainUniforms_ = {
+    const terrainUniforms = {
       nSeedTerrain : {value : this.nSeedTerrain},
       nStrengthTerrain1: {value: this.nStrengthTerrain1},
       nStrengthTerrain2: {value: this.nStrengthTerrain2},
+      cameraPositionWorld: {value: this.camera_.position},
+      lightPositionWorld: {value: light.position},
+      shineDamper: {value: this.shineDamper},
+      ks: {value: this.ks},
+      kd: {value: this.kd},
+      ka: {value: this.ka},
     };
     this.terrainMaterial = new THREE.ShaderMaterial({
       vertexShader: shaders['simplex_noise'] + shaders['terrain_vert'],
       fragmentShader:
           shaders['simplex_noise'] + shaders['terrain_frag'],
-      uniforms: this.terrainUniforms_,
+      uniforms: terrainUniforms
       //wireframe:true,
     });
+
     const terrainMesh = new THREE.Mesh(terrainGeometry, this.terrainMaterial);
-    terrainMesh.rotation.x = -Math.PI / 2;
+    terrainMesh.rotation.x = - Math.PI / 2;
     terrainMesh.position.y += 100;
     this.scene_.add(terrainMesh);
   }
@@ -141,13 +149,12 @@ class Application {
       vertexShader: shaders['water_vert'],
       fragmentShader:
           shaders['simplex_noise'] + shaders['water_frag'],
-      uniforms: waterUniforms,
-      side: THREE.BackSide
+      uniforms: waterUniforms
     });
 
     const waterGeometry = new THREE.PlaneGeometry(700, 700, 1, 1);
     const waterMesh = new THREE.Mesh(waterGeometry, this.waterMaterial)
-    waterMesh.rotation.x = Math.PI / 2;
+    waterMesh.rotation.x = - Math.PI / 2;
     this.scene_.add(waterMesh);
   }
 
@@ -160,23 +167,35 @@ class Application {
         window.innerWidth, window.innerHeight,
         {minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter});
 
-    const light = new THREE.DirectionalLight(0xffffff);
-    light.position.set(-600, 300, 600);
+    const light = new THREE.DirectionalLight(0xffffff, 1.0);
+    light.position.set(-600.0, 600.0, 600.0);
+    //light.position.set(0.0, 60.0, 0.0) * 3.0;
 
     const sphereGeometry = new THREE.SphereGeometry(50, 32, 32);
-    const sphereMaterial = new THREE.MeshLambertMaterial({color: 0xeb0000});
+    //const sphereMaterial = new THREE.MeshPhongMaterial({color: 0xeb0000, specular:0xffffff, shininess: 10 });
+    const sphereMaterial = new THREE.MeshLambertMaterial( {color: 0xeb0000});
     const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
     sphereMesh.position.y += 80;
 
-    const cubeMaterial = new THREE.MeshPhongMaterial({
+    const sphereGeometry2 = new THREE.SphereGeometry(10, 32, 32);
+    const sphereMaterial2 = new THREE.MeshLambertMaterial({color:0xffb400});
+    const sphereMesh2 =  new THREE.Mesh(sphereGeometry2, sphereMaterial2);
+
+    sphereMesh2.position.x = -60.0 * 2.0;
+    sphereMesh2.position.y = 60.0 * 3.0;
+    sphereMesh2.position.z = 60.0 * 2.0;
+
+    //this.scene_.add(sphereMesh2);
+
+   /* const cubeMaterial = new THREE.MeshPhongMaterial({
       color: 0xffffff,
       specular: 0x555555,
       shininess: 30,
       vertexColors: THREE.FaceColors,
-    });
+    });*/
 
     this.setupWater_(light, shaders);
-    this.setupTerrain_(shaders);
+    this.setupTerrain_(light, shaders);
     this.setupOBJ_();
 
     this.scene_.add(light);
@@ -211,6 +230,7 @@ class Application {
     const waterUniforms = this.waterMaterial.uniforms;
     waterUniforms.waveStrength.value = this.waveStrength;
     waterUniforms.shineDamper.value = this.shineDamper;
+    waterUniforms.cameraPositionWorld.value = this.camera_.position;
     waterUniforms.ks.value = this.ks;
     waterUniforms.kd.value = this.kd;
     waterUniforms.ka.value = this.ka;
@@ -219,6 +239,11 @@ class Application {
     terrainUniforms.nSeedTerrain.value = this.nSeedTerrain;
     terrainUniforms.nStrengthTerrain1.value = this.nStrengthTerrain1;
     terrainUniforms.nStrengthTerrain2.value = this.nStrengthTerrain2;
+    terrainUniforms.shineDamper.value = this.shineDamper;
+    terrainUniforms.cameraPositionWorld.value = this.camera_.position;
+    terrainUniforms.ks.value = this.ks;
+    terrainUniforms.kd.value = this.kd;
+    terrainUniforms.ka.value = this.ka;
   }
 
   updateDuck_(time) {
@@ -246,6 +271,8 @@ class Application {
   loop() {
     this.stats_.begin();
     this.controls_.update();
+
+  //  console.log("CAMERA POS", this.camera_.position);
 
     // Update stuff
     const time = this.clock_.getElapsedTime();

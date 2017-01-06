@@ -30,20 +30,26 @@ float calculateFresnel(in vec3 unitToCamera, in vec3 perturbedNormal) {
   return fresnelTerm;
 }
 
-void calculateLightning(const vec3 surfaceNormal, const vec3 eyeDirection, float shiny,
+void calculateLightning(const vec3 surfaceNormal, const vec3 unitToCamera, float shiny,
               float spec, float diffuse, inout vec3 diffuseColor,
               inout vec3 specularColor){
     vec3 sunColor = vec3(1.0, 1.0, 1.0);
     vec3 unitFromLight = normalize(fromLight);
     vec3 reflection = normalize(reflect(unitFromLight, surfaceNormal));
-    float direction = max(0.0, dot(eyeDirection, reflection));
+    float direction = max(0.0, dot(unitToCamera, reflection));
     specularColor += pow(direction, shiny) * sunColor * spec;
     diffuseColor += max(dot(-unitFromLight, surfaceNormal), 0.0) * sunColor * diffuse;
 }
 
 void main() {
-  float noiseX = snoise(vec3(vUv.x + time*0.1, vUv.y + time * 0.1, time * 0.1));
-  float noiseY = snoise(vec3(vUv.x, vUv.y + time*0.1, 0.2));
+
+  vec3 gradtemp = vec3(0.0);
+  vec3 grad = vec3(0.0);
+  float noiseX = snoise(vec3(vUv.x + time*0.1, vUv.y + time * 0.1, time * 0.1), gradtemp);
+  grad += gradtemp;
+  float noiseY = snoise(vec3(vUv.x, vUv.y + time*0.1, 0.2), gradtemp);
+  grad += gradtemp;
+
   vec2 noise = waveStrength * vec2(noiseX, noiseY);
 
   vec2 ndc = posClipSpace.xy / posClipSpace.w;
@@ -51,8 +57,13 @@ void main() {
   vec2 reflectionCoords = vec2(1.0 - screenCoords.x, screenCoords.y);
   vec2 refractionCoords = vec2(screenCoords.x, screenCoords.y);
 
-  vec3 perturbedNormal = normalize(vec3(noise.x, 0.4, noise.y));
-  perturbedNormal = normalize(perturbedNormal);
+ // vec3 perturbedNormal = normalize(vec3(noise.x, 0.4, noise.y));
+ // perturbedNormal = normalize(perturbedNormal);
+
+  vec3 normal = vec3(0.0, 1.0, 0.0);
+  vec3 gradProj = dot(grad, normal) * normal;
+  vec3 gradOrt = grad - gradProj;
+  vec3 perturbedNormal = normalize(normal - 0.02*gradOrt);
 
   vec3 unitToCamera = normalize(toCamera);
   float fresnelTerm = calculateFresnel(unitToCamera, perturbedNormal);
@@ -68,6 +79,5 @@ void main() {
 
   vec4 waterColorFinal = mix(gl_FragColor, waterColor, 0.2);
   gl_FragColor = waterColorFinal * ka + waterColorFinal * vec4(diffuseColor, 1.0)
-               + vec4(vec3(1.0, 1.0, 1.0), 1.0) * vec4(specularColor, 1.0);
-
+               + vec4(specularColor, 1.0);
 }
