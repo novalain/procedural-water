@@ -16,6 +16,7 @@ class Application {
 
   initGUIVars() {
     this.waveStrength = 0.02;
+    this.nSeedTerrain = 1.0;
     //this.scatterConst = 0.0;
     this.shineDamper = 20.0;
     this.ks = 0.6;
@@ -109,19 +110,17 @@ class Application {
     //boximg.wrapS = boximg.wrapT = THREE.RepeatWrapping;
     //img.wrapS = img.wrapT = THREE.RepeatWrapping;
     //img.repeat.set(3, 3);
-    //this.terrainUniforms_ = {
-     // time : {value : 0},
-      //textureMap : {value: img},
-    //  myTexture: {value: boximg},
-    //};
-    this.terrainMaterial_ = new THREE.ShaderMaterial({
+    this.terrainUniforms_ = {
+      nSeedTerrain : {value : 1.0},
+    };
+    this.terrainMaterial = new THREE.ShaderMaterial({
       vertexShader: this.shaders_['simplex_noise'] + this.shaders_['terrain_vert'],
       fragmentShader:
           this.shaders_['simplex_noise'] + this.shaders_['terrain_frag'],
-      //uniforms: this.terrainUniforms_,
+      uniforms: this.terrainUniforms_,
       //wireframe:true,
     });
-    const terrainMesh = new THREE.Mesh(terrainGeometry, this.terrainMaterial_);
+    const terrainMesh = new THREE.Mesh(terrainGeometry, this.terrainMaterial);
     terrainMesh.rotation.x = -Math.PI / 2;
     terrainMesh.position.y += 100;
     this.scene_.add(terrainMesh);
@@ -282,6 +281,7 @@ class Application {
 
   updateUniforms_() {
     this.waterMaterial.uniforms.waveStrength.value = this.waveStrength;
+    this.terrainMaterial.uniforms.nSeedTerrain.value = this.nSeedTerrain;
     //this.waterMaterial.uniforms.scatterConst.value = this.scatterConst;
     this.waterMaterial.uniforms.shineDamper.value = this.shineDamper;
     this.waterMaterial.uniforms.ks.value = this.ks;

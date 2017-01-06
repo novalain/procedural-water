@@ -21,11 +21,11 @@ window.onload = () => {
     var gui = new dat.GUI();
     const app = new Application(document.body, shadersLoaded);
     gui.add(app, 'waveStrength', 0, 0.1);
-    //gui.add(app, 'scatterConst', 1.0, 5.0);
     gui.add(app, 'shineDamper', 0.0, 40.0);
     gui.add(app, 'ks', 0.0, 1.0);
     gui.add(app, 'kd', 0.0, 1.0);
     gui.add(app, 'ka', 0.0, 1.0);
+    gui.add(app, 'nSeedTerrain', 1.0, 5.0);
     app.loop();
   });
 }
